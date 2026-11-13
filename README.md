@@ -50,6 +50,7 @@ not establish identical wiring.
 ## Documentation
 
 - [Offline validation and remaining hardware tests](docs/VALIDATION.md)
+- [Migration preflight and unattended-installation boundary](docs/MIGRATION-PREFLIGHT.md)
 - [Configuration button and reset behavior](docs/BUTTON-BEHAVIOR.md)
 - [Hardware, Ethernet reset evidence and remaining recovery work](docs/HARDWARE-AND-RECOVERY.md)
 - [Installed-image Ethernet evidence](tools/installed-network-evidence.json)

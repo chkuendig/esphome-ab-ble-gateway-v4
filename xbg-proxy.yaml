@@ -13,6 +13,16 @@ esp32:
   partitions: layout-candidates/stock-and-dual-proxy.csv
   framework:
     type: esp-idf
+    # Nordic transport supports plaintext MQTT only. ESP-IDF still needs TLS
+    # helpers internally; keep those while dropping unused transports and EAP.
+    sdkconfig_options:
+      CONFIG_MQTT_TRANSPORT_SSL: "n"
+      CONFIG_MQTT_TRANSPORT_WEBSOCKET: "n"
+      CONFIG_MQTT_TRANSPORT_WEBSOCKET_SECURE: "n"
+      CONFIG_ESP_WIFI_ENTERPRISE_SUPPORT: "n"
+      CONFIG_MBEDTLS_PEM_WRITE_C: "n"
+      CONFIG_MBEDTLS_X509_CRL_PARSE_C: "n"
+      CONFIG_MBEDTLS_X509_CSR_PARSE_C: "n"
 
 # Candidate layout is NOT installed. A verified one-time migration must copy
 # current stock to factory first. Never vendor-OTA a merged/factory image.

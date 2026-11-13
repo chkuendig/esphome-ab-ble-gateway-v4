@@ -22,6 +22,9 @@ The intermediary Nordic MQTT path reads broker, port, topic and credentials
 from stock NVS at startup. It currently supports plaintext MQTT only and
 refuses unsupported settings rather than silently dropping TLS. A settings
 reset disables that import too. It does not reconfigure the network router.
+The build omits MQTT TLS/WebSocket transports and enterprise Wi-Fi support.
+ESP-IDF still links TLS helpers through its plain TCP transport, so the core
+TLS dependency remains. Native API/OTA encryption uses the separate Noise path.
 
 These offsets/types are pinned-source contracts, not a promise about future
 ESPHome versions. Recheck the upstream preference layout before upgrading.
@@ -67,6 +70,9 @@ preference records has been established.
 **Steps 3–5 are not implemented or executed for the new ESPHome image.** The
 live development gateway remains stock. While physical recovery is unavailable,
 continue offline development rather than execute this unvalidated migration.
+The [offline migration preflight](MIGRATION-PREFLIGHT.md) now validates matching
+backups, application integrity and partition geometry, and reports the remaining
+installation blockers explicitly. It does not write the prepared records.
 
 ## Reset and provisioning
 
