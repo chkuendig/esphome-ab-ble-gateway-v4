@@ -39,8 +39,9 @@ See [settings migration and publication rules](docs/SETTINGS-AND-MIGRATION.md).
   Native ESPHome delivery for Nordic is still under development.
 - GPIO12 configuration button: ten-second hold resets settings; triple-click
   starts Wi-Fi SmartConfig. UART0 Improv provisioning is also enabled.
-- Preserved stock image selection and a bounded trial watchdog, independently
-  of ESPHome safe mode. These new ESPHome paths need live validation.
+- Preserved stock image selection and a bounded trial watchdog at entry to
+  `app_main`, before ESPHome preferences, safe mode or component setup.
+  These new ESPHome paths need live validation.
 
 These are reusable components, but the hardware profile and recovery image
 check currently target the inspected stock 1.5.13 application. Other V4 board

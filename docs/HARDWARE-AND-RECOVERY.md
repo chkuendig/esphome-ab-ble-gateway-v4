@@ -36,8 +36,13 @@ not solve that failure window. Bootloader compatibility and a recoverable
 installer remain prerequisites. Never send a merged ESPHome factory image to
 the stock application-only OTA endpoint.
 
-The recovery component selects verified stock for the next boot before a
-15-minute trial and arms an RTC guard. Acceptance is a separate operation.
+The recovery wrapper selects verified stock for the next boot and arms an RTC
+guard at entry to `app_main`, before ESPHome initializes preferences or decides
+whether to enter safe mode. Component setup adopts this state for a 15-minute
+trial; the independent RTC guard expires ten seconds later if the main loop
+cannot return to stock. Component setup alone cannot establish this protection:
+safe mode can skip it. Faults before `app_main` remain outside this guard.
+Acceptance is a separate operation.
 The old diagnostic firmware's two timed stock returns succeeded, but this
 ESPHome implementation is untested. Linker wrappers block whole-default-NVS
 erasure so upstream preference recovery cannot erase vendor configuration.

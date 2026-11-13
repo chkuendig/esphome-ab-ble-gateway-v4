@@ -12,4 +12,4 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     cg.add_cmake_arg("CMAKE_EXE_LINKER_FLAGS",
-                     "-Wl,--wrap=nvs_flash_erase,--wrap=nvs_flash_erase_partition")
+                     "-Wl,--wrap=app_main,--wrap=nvs_flash_erase,--wrap=nvs_flash_erase_partition")

@@ -54,8 +54,8 @@ table-sector interruption window. UART recovery would require physical access;
 the UART adapters and actual board header have not been hardware-validated.
 
 The tested size reduction removes unused MQTT transports and enterprise Wi-Fi
-support. It saves 10,480 bytes, leaving a 1,338,464-byte application: still
-289,888 bytes over the original 1 MiB slots. This configuration therefore still
+support. With the subsequent early-recovery wrapper, the application is
+1,338,688 bytes: still 290,112 bytes over the original 1 MiB slots. It therefore
 needs a layout migration. A future smaller build would also need recovery
 selection adapted to the original layout, plus hardware validation of startup,
 credential import and timed return. Size alone does not establish that the
@@ -64,3 +64,27 @@ migration works.
 No partition-table writer or bootloader updater is included. No live settings,
 flash layout, Nordic firmware or Home Assistant configuration were changed by
 these checks.
+
+## Private emulator checkpoints
+
+`tools/prepare_emulation.py` uses the same input validation to create four
+complete flash-image checkpoints: original layout, current stock copied into
+the old factory slot, new layout booting stock, and new layout selecting the
+proxy. It preserves bootloader, NVS and PHY bytes and generates the table MD5
+and OTA selection record. These are completed states, **not an installer or a
+validated ordering of device writes**.
+
+```sh
+python3 tools/prepare_emulation.py \
+  private/flash-a.bin private/flash-b.bin private/firmware.ota.bin \
+  layout-candidates/stock-and-dual-proxy.csv private/emulator-checkpoints
+```
+
+The destination must not already exist. Its permissions are 0700 and generated
+files are 0600. **Every image contains private device settings. Never upload
+them or use them as a hardware flashing artifact.**
+
+The initial emulator attempt did not validate booting these images. See the
+[validation record](VALIDATION.md) for the observed limitations. An emulator
+also cannot establish real Bluetooth reception, network reconnection, physical
+button behavior or power-loss recovery.
