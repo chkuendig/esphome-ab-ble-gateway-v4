@@ -18,13 +18,10 @@ ESPHome 2026.10.2 uses these preference records for this credential-free YAML:
 
 The firmware imports stock Wi-Fi only when the normal ESPHome Wi-Fi record is
 absent and reset suppression is not set. It never erases stock's namespace.
-The intermediary Nordic MQTT path reads broker, port, topic and credentials
-from stock NVS at startup. It currently supports plaintext MQTT only and
-refuses unsupported settings rather than silently dropping TLS. A settings
-reset disables that import too. It does not reconfigure the network router.
-The build omits MQTT TLS/WebSocket transports and enterprise Wi-Fi support.
-ESP-IDF still links TLS helpers through its plain TCP transport, so the core
-TLS dependency remains. Native API/OTA encryption uses the separate Noise path.
+MQTT has been removed from the target firmware. Stock broker settings stay
+untouched for stock rollback, but ESPHome neither imports nor uses them. Both
+receivers deliver through the encrypted native Bluetooth API. Native API/OTA
+encryption uses Noise. The importer does not reconfigure the network router.
 
 These offsets/types are pinned-source contracts, not a promise about future
 ESPHome versions. Recheck the upstream preference layout before upgrading.

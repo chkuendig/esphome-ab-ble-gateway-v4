@@ -13,12 +13,8 @@ esp32:
   partitions: layout-candidates/stock-and-dual-proxy.csv
   framework:
     type: esp-idf
-    # Nordic transport supports plaintext MQTT only. ESP-IDF still needs TLS
-    # helpers internally; keep those while dropping unused transports and EAP.
+    # Native encrypted API/OTA only; no MQTT or HTTP/TLS client transport.
     sdkconfig_options:
-      CONFIG_MQTT_TRANSPORT_SSL: "n"
-      CONFIG_MQTT_TRANSPORT_WEBSOCKET: "n"
-      CONFIG_MQTT_TRANSPORT_WEBSOCKET_SECURE: "n"
       CONFIG_ESP_WIFI_ENTERPRISE_SUPPORT: "n"
       CONFIG_MBEDTLS_PEM_WRITE_C: "n"
       CONFIG_MBEDTLS_X509_CRL_PARSE_C: "n"
@@ -58,20 +54,11 @@ esp32_ble_tracker:
     active: false
 
 bluetooth_proxy:
+  id: native_proxy
   active: true
   connection_slots: 1
 
-# Preserve the Nordic radio and the existing ab_ble_gateway MQTT contract.
-mqtt:
-  broker: ""  # Set from preserved vendor NVS before MQTT setup, or disabled.
-  discovery: false
-  reboot_timeout: 0s
-  topic_prefix: ab-ble-gateway-v4
-  birth_message:
-  will_message:
-  shutdown_message:
-  log_topic:
-
+# Both receivers forward through the encrypted ESPHome Bluetooth API.
 uart:
   id: nordic_uart
   tx_pin: GPIO33
@@ -86,10 +73,10 @@ external_components:
 
 ab_nordic:
   uart_id: nordic_uart
+  proxy_id: native_proxy
   id: nordic
 
 ab_settings:
-  nordic_id: nordic
 
 stock_recovery:
   id: recovery

@@ -60,13 +60,14 @@ ESP32-generated RMII output clock. A wired/Wi-Fi fallback profile therefore
 needs explicit sequencing and validation; enabling both continuously is not
 an established recovery solution. Current firmware is Wi-Fi only.
 
-Native ESPHome has one adapter identity per Bluetooth proxy. Nordic UART
-records contain advertisement event type but omit public/random address type.
-They cannot be passed blindly as native connectable advertisements. Nordic
-RSSI also does not establish ESP32 GATT reachability. The current MQTT path
-preserves separate passive scanner attribution while native Nordic delivery
-is developed. Keep the existing HA scanner integration until replacement
-acceptance is complete.
+Native ESPHome has one adapter identity per Bluetooth proxy. Both radios now
+feed that identity through the native API; MQTT is removed. Nordic UART omits
+public/random address type. The replacement preserves an unknown type and
+uses real ESP32 observations to resolve it before a connection; it never uses
+the UART event type as an address type. Nordic RSSI does not establish ESP32
+GATT reachability. See [native delivery](NATIVE-NORDIC.md) for the bounded cache,
+connection guard and acceptance checks. The old HA scanner integration can be
+retired after native delivery is accepted on hardware, as part of the cutover.
 
 Acceptance needs repeated gateway-attributed GATT reads, fresh passive
 advertisements from existing devices, network reconnection, ordinary OTA and

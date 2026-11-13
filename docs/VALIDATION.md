@@ -1,14 +1,22 @@
 # Offline validation — 2026-11-14
 
 The generic Wi-Fi prototype compiles with the pinned ESPHome 2026.10.2 / IDF
-5.5.6 builder. Application size: **1,338,688 bytes**. SHA256:
-`14f3808de029de8e0d2bcafceaa04533237758dd33e84a02543d2ef640e7b068`.
+5.5.6 builder. Application size: **1,237,744 bytes**. SHA256:
+`305d40b2361a44c7efa6742f708a1907206881aa13730625c1be83e43e63c019`.
 No application from this repository has been installed on the gateway.
 
 Completed checks:
 
 - Host C++ tests: button timing boundaries, debounce, repeated hold,
   triple-click expiry, startup-held button and clock rollover.
+- Native Nordic host tests: binary UART framing with embedded CR/LF, repeated
+  frames, MAC byte order, signed RSSI, address-type observation/update/expiry,
+  bounded eviction, unknown-type resolution/rejection and clock rollover.
+- Native API compatibility test in a separate offline process using the
+  installed `aioesphomeapi 46.25.0`, `bleak-esphome 4.0.0`, and
+  `habluetooth 7.1.2`: protobuf round trip and actual scanner decoding preserve
+  unknown/public/random address types, RSSI and service data. No HA API,
+  adapter registration, network/radio setup or running HA state modification.
 - Twelve Python tests: settings-record layout and input limits, rejecting
   unsupported enterprise Wi-Fi/empty keys, publication audit detection, and
   migration integrity checks for damaged backups/apps, overlapping partitions,
@@ -25,14 +33,18 @@ Completed checks:
   real `app_main`. This fixes reliance on ordinary component setup, which safe
   mode can skip. It is compile/link evidence, not a demonstrated watchdog reset.
 - Generated defines include runtime-key OTA and encryption-required guards.
+- Linked Bluetooth open call reaches `__wrap_esp_ble_gattc_open`; unknown
+  address types are resolved from ESP32 observations or rejected before the
+  controller call. No MQTT or legacy MessagePack-packer symbols remain.
 - Application checksum/hash validation passes. It fits the proposed 1.5 MiB
   OTA slots but exceeds both current 1 MiB stock OTA slots.
 
-The supported size reduction removes unused MQTT transports and enterprise
-Wi-Fi support, retaining the TLS helpers required by ESP-IDF's TCP transport.
-Together with the early-recovery change it saves 10,256 bytes against the
-original prototype, but still exceeds the original 1 MiB slots by 290,112 bytes.
-API Noise and runtime-key encrypted OTA remain enabled.
+The full native migration removes MQTT, broker import and the legacy MessagePack
+encoder. Nordic advertisements now use the existing encrypted Bluetooth API,
+including explicit handling of the address type omitted by stock UART. This
+saves **100,944 bytes** against the preceding 1,338,688-byte build, while still
+exceeding the original 1 MiB slots by **189,168 bytes**. API Noise and
+runtime-key encrypted OTA remain enabled. No feature claim depends on a broker.
 
 The new [migration preflight](MIGRATION-PREFLIGHT.md) passes against the two
 identical development backups and this candidate. It explicitly reports that
@@ -49,14 +61,15 @@ binary release is advertised yet.
 
 Not validated: first-boot credential import on hardware, SmartConfig/Improv,
 physical reset behavior and LED feedback, Ethernet startup, ESPHome GATT,
-concurrent Nordic scanning, new trial rollback, ordinary OTA and partition
-migration. Native delivery of Nordic advertisements is not implemented; its
-current MQTT transport remains necessary.
+concurrent Nordic scanning with native delivery, new trial rollback, ordinary
+OTA and partition migration. The native transport is implemented and tested
+offline, but no hardware acceptance or HA integration retirement has occurred.
 
 ## Emulator investigation — inconclusive
 
 Private checkpoint images were prepared from the matching device backups and
-the candidate. Espressif QEMU versions `esp_develop_9.2.2_20260417` (recommended
+the earlier candidate, before MQTT removal. Espressif QEMU versions
+`esp_develop_9.2.2_20260417` (recommended
 by the pinned IDF tools manifest) and `esp_develop_9.2.2_20261109` were tried in
 an isolated container without LAN access, with snapshot writes. Downloaded
 archives were SHA256-checked against the IDF manifest or release asset digest.

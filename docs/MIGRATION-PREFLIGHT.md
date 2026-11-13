@@ -53,9 +53,9 @@ under the old and new layouts. Even correct ordering cannot remove the single
 table-sector interruption window. UART recovery would require physical access;
 the UART adapters and actual board header have not been hardware-validated.
 
-The tested size reduction removes unused MQTT transports and enterprise Wi-Fi
-support. With the subsequent early-recovery wrapper, the application is
-1,338,688 bytes: still 290,112 bytes over the original 1 MiB slots. It therefore
+The native-only build removes MQTT entirely and forwards both receivers through
+ESPHome's Bluetooth API. The application is 1,237,744 bytes: still 189,168 bytes
+over the original 1 MiB slots. It therefore
 needs a layout migration. A future smaller build would also need recovery
 selection adapted to the original layout, plus hardware validation of startup,
 credential import and timed return. Size alone does not establish that the

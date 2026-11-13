@@ -11,12 +11,12 @@ migration and recovery procedure.
 
 ## Device settings stay on the device
 
-The public YAML contains no Wi-Fi credentials, API key, MQTT broker or fixed
+The public YAML contains no Wi-Fi credentials, API key or fixed
 hardware address. Network credentials live in NVS, independently of the
 application image. `ab_settings` can import existing personal Wi-Fi credentials
-from the stock `storage` namespace into ESPHome's normal preferences. It also
-reads the existing plaintext MQTT transport configuration and obtains the
-source MAC from the ESP32. Unsupported MQTT configurations remain disabled.
+from the stock `storage` namespace into ESPHome's normal preferences. No MQTT
+client or broker configuration is included. Both receivers use ESPHome's
+encrypted native Bluetooth API.
 
 The preferred migration is first-boot import: back up settings while stock
 still runs, preserve NVS during installation, then let ESPHome copy the saved
@@ -35,8 +35,9 @@ See [settings migration and publication rules](docs/SETTINGS-AND-MIGRATION.md).
 
 - Native ESPHome Bluetooth proxy: ESP32 scanning and one active GATT slot.
 - Existing Nordic firmware and UART protocol retained, RX32/TX33 at 115200.
-- Nordic advertisements currently use the stock MessagePack/MQTT transport.
-  Native ESPHome delivery for Nordic is still under development.
+- Nordic advertisements use native Bluetooth API batches alongside ESP32
+  advertisements. Unknown Bluetooth address types are preserved explicitly;
+  ESP32 observations resolve them before GATT connections. No MQTT bridge.
 - GPIO12 configuration button: ten-second hold resets settings; triple-click
   starts Wi-Fi SmartConfig. UART0 Improv provisioning is also enabled.
 - Preserved stock image selection and a bounded trial watchdog at entry to
@@ -55,6 +56,7 @@ not establish identical wiring.
 - [Configuration button and reset behavior](docs/BUTTON-BEHAVIOR.md)
 - [Hardware, Ethernet reset evidence and remaining recovery work](docs/HARDWARE-AND-RECOVERY.md)
 - [Installed-image Ethernet evidence](tools/installed-network-evidence.json)
+- [Native Nordic delivery and address-type handling](docs/NATIVE-NORDIC.md)
 
 ## Build and checks
 
@@ -68,6 +70,9 @@ runner prevents the build.
 python3 -m unittest discover -s tests -v
 g++ -std=c++17 -Wall -Wextra -Werror tests/gesture.cpp -o /tmp/ab-gesture-test
 /tmp/ab-gesture-test
+gcc -std=c11 -Wall -Wextra -Werror -c components/ab_nordic/protocol.c -o /tmp/ab-protocol.o
+g++ -std=c++17 -Wall -Wextra -Werror tests/native_nordic.cpp /tmp/ab-protocol.o -o /tmp/ab-native-test
+/tmp/ab-native-test
 ./build.sh
 ```
 
