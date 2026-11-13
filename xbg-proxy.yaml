@@ -1,0 +1,105 @@
+esphome:
+  name: ab-ble-gateway-v4
+  name_add_mac_suffix: true
+  friendly_name: AB BLE Gateway V4
+  min_version: 2026.10.2
+  compile_process_limit: 2
+  build_path: private/build
+
+esp32:
+  board: esp32dev
+  variant: esp32
+  flash_size: 4MB
+  partitions: layout-candidates/stock-and-dual-proxy.csv
+  framework:
+    type: esp-idf
+
+# Candidate layout is NOT installed. A verified one-time migration must copy
+# current stock to factory first. Never vendor-OTA a merged/factory image.
+logger:
+  level: INFO
+  baud_rate: 115200
+
+# Local provisioning through UART0 (separate from Nordic RX32/TX33).
+improv_serial:
+
+api:
+  encryption:
+    # Per-device key lives in NVS; never bake a shared/personal key into releases.
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+    # ab_settings requires encryption using the per-device provisioned API key.
+
+safe_mode:
+  num_attempts: 3
+  boot_is_good_after: 2min
+  reboot_timeout: 10min
+
+wifi:
+  # ab_settings imports existing stock credentials into ESPHome preferences.
+  power_save_mode: none
+  reboot_timeout: 0s
+
+# Passive scans do not prevent HA from initiating active GATT connections.
+esp32_ble_tracker:
+  scan_parameters:
+    active: false
+
+bluetooth_proxy:
+  active: true
+  connection_slots: 1
+
+# Preserve the Nordic radio and the existing ab_ble_gateway MQTT contract.
+mqtt:
+  broker: ""  # Set from preserved vendor NVS before MQTT setup, or disabled.
+  discovery: false
+  reboot_timeout: 0s
+  topic_prefix: ab-ble-gateway-v4
+  birth_message:
+  will_message:
+  shutdown_message:
+  log_topic:
+
+uart:
+  id: nordic_uart
+  tx_pin: GPIO33
+  rx_pin: GPIO32
+  baud_rate: 115200
+  rx_buffer_size: 4096
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+ab_nordic:
+  uart_id: nordic_uart
+  id: nordic
+
+ab_settings:
+  nordic_id: nordic
+
+stock_recovery:
+  id: recovery
+
+ab_button:
+  recovery_id: recovery
+
+button:
+  - platform: template
+    name: Accept Tested Proxy Firmware
+    entity_category: config
+    on_press:
+      - lambda: id(recovery).accept();
+  - platform: template
+    name: Restore Stock Gateway Firmware
+    entity_category: config
+    on_press:
+      - lambda: id(recovery).restore_stock();
+
+sensor:
+  - platform: uptime
+    name: Uptime
+    update_interval: 60s
