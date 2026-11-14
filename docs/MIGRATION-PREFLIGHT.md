@@ -51,8 +51,9 @@ these are software-model tests, not physical power-cut tests. Faults before
 `app_main` remain outside the application recovery guard.
 
 The candidate then has two original-size OTA slots available, plus preserved
-stock in factory. A bounded hardware trial is in progress. Network import,
-Bluetooth delivery and timed recovery must be checked before acceptance.
+stock in factory. Network import, native Bluetooth delivery, encrypted OTA and timed stock
+recovery passed on the development unit. Repeat these checks for each device
+before acceptance; an offline preflight alone cannot establish them.
 
 ## Superseded larger-layout investigation
 

@@ -66,6 +66,6 @@ the preserved stock image without clearing its configuration. A physical
 settings reset does not select stock firmware. ESPHome safe mode, ROM serial
 recovery and Ethernet PHY reset are also distinct operations.
 
-**Status: source implemented, host gesture tests pass, no live button test or
-ESPHome deployment.** Do not describe the entire replacement behavior as
+**Status: source implemented, host gesture tests pass, ESPHome boot tested,
+physical button gestures not tested.** Do not describe the entire replacement behavior as
 hardware-verified stock equivalence.

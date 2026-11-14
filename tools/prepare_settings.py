@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Prepare PRIVATE NVS records from a read-only stock settings backup. No flashing.
 
-The installer must apply these records through NVS APIs while preserving all
-other namespaces, then verify readback BEFORE switching to the generic image.
-This file is a staging contract, not an installer or a partition image.
+The current migration imports Wi-Fi from stock on first boot and provisions
+the generated API key with provision_api.py. This private bundle can also
+support a separately verified NVS writer; it is not a partition image.
 """
 import argparse
 import base64

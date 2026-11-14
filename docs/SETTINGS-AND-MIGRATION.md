@@ -30,11 +30,11 @@ ESPHome versions. Recheck the upstream preference layout before upgrading.
 
 Keep stock's working Wi-Fi settings in place. After a backed-up, recoverable
 application migration, `ab_settings` copies them into normal ESPHome
-preferences before Wi-Fi starts, commits them and lets Wi-Fi reconnect. Stock credentials and broker settings remain intact for rollback. The only
+preferences before Wi-Fi starts, commits them and lets Wi-Fi reconnect.
+Stock credentials and broker settings remain intact for rollback. The only
 vendor-settings write restores the standard vendor OTA feed when the stored
 URL contains our installer's `/esphome-migration/` marker; unrelated custom
-feeds are untouched. Verify reconnection,
-persistence and API onboarding before accepting the firmware trial.
+feeds are untouched. Verify reconnection, persistence and API onboarding before accepting the firmware trial.
 
 This needs no arbitrary NVS write endpoint in stock. The inspected stock HTTP
 configuration handler (`0x400db548`) opens the literal `storage` namespace and
@@ -65,9 +65,55 @@ preference records has been established.
 5. Verify BLE traffic, GATT, network persistence and stock recovery before
    accepting the trial. Keep the key in a restricted local file for HA.
 
-A bounded trial is in progress. No permanent acceptance or HA integration
-retirement is claimed yet. The [offline preflight](MIGRATION-PREFLIGHT.md)
-validates the backups, app and original geometry, but is not a hardware test.
+The inspected gateway completed onboarding, encrypted OTA and HA battery
+polling; its acceptance command was sent and the old gateway integration was
+disabled. MyCO2 reception remains an open regression. The
+[offline preflight](MIGRATION-PREFLIGHT.md) validates the backups, app and
+original geometry, but is not a hardware test for another device.
+
+## Migration helper commands
+
+These commands expose the same primitives used in the private hardware trial;
+the new standalone wrappers have syntax checks, not a separate end-to-end
+hardware trial. Binary publication remains blocked by the MyCO2 investigation.
+They target only the inspected stock image and original partition layout.
+
+1. Preserve two matching full-flash backups and private stock `/info`,
+   `/connection` and `/config` responses. Stock needs working personal Wi-Fi;
+   this profile does not provide Ethernet. Prepare the private settings bundle
+   as above. Keep the device on a trusted LAN while its API key is unprovisioned.
+2. Stage the verified **app-only** image on a temporary LAN server:
+
+   ```sh
+   python3 tools/serve_migration.py private/flash-a.bin private/flash-b.bin \
+     private/firmware.ota.bin private/migration-server.json \
+     --bind-ip YOUR_LAN_SERVER_IP --gateway-ip YOUR_GATEWAY_IP
+   ```
+
+   This validates backup/image geometry, permits downloads only from the
+   specified gateway IP, writes a private temporary `base_url`, and exits after
+   twenty minutes. It does not configure or flash the device. Keep it running.
+3. In stock's HTTP interface, set `ota-url` to that private `base_url`, then
+   request the update. The inspected firmware uses form-encoded POST `/config`
+   with `ota-url`, then POST `/update` with `ota-update=1`. The server supplies
+   `/1.5.13/ota.bin`. Save stock configuration before changing it; do not use a
+   merged factory image. First boot restores the vendor feed only when it sees
+   this helper's `/esphome-migration/` URL marker.
+4. Within the fifteen-minute unaccepted trial, provision the API key and verify
+   encrypted reconnection (requires `aioesphomeapi`, tested with 46.25.0):
+
+   ```sh
+   python3 tools/provision_api.py YOUR_GATEWAY_IP \
+     private/recovery/esphome-settings.json private/ha-connection.json
+   ```
+
+   The output contains a secret. Enter its key when adding the ESPHome device
+   to Home Assistant; never upload that file. The helper checks the expected
+   device MAC, provisions only when needed, and never accepts the trial.
+5. Check all required sensors, GATT reads and reconnect/recovery behavior.
+   Only then press **Accept Tested Proxy Firmware** in the native API/HA.
+   Otherwise leave it unaccepted for the tested timed return to stock. Stock
+   return preserves its settings; restore the old HA gateway entry if needed.
 
 ## Reset and provisioning
 
@@ -76,7 +122,8 @@ acceptance metadata and records reset suppression first. The stock settings
 remain private on the device solely for stock rollback; the replacement does
 not reconnect using them after that reset. Reprovision Wi-Fi with the
 configuration button's SmartConfig gesture or UART0 Improv. API provisioning
-uses ESPHome's runtime-key flow; that flow and SmartConfig need live testing.
+uses ESPHome's runtime-key flow, demonstrated during the initial trial.
+SmartConfig and physical reset still need live testing.
 OTA explicitly requires encryption: no plaintext OTA fallback is enabled.
 No shared API/OTA key is compiled into public firmware.
 

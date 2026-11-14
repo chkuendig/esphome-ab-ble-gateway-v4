@@ -130,7 +130,7 @@ def assess(backup_a, backup_b, candidate, target):
         raise ValueError("Application must fit both proposed OTA slots")
     old_factory = image(backup_a[0x10000:0x110000], padded=True)
     needs_table_change = target != current
-    blockers = ["ESPHome first boot, onboarding and trial recovery are not hardware-validated"]
+    blockers = ["Offline input checks do not validate this device or candidate on hardware"]
     if needs_table_change:
         blockers.insert(0, "A power loss during partition-table erase/write can prevent all application boots")
     return {

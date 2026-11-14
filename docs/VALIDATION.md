@@ -1,5 +1,43 @@
 # Validation — 2026-11-14
 
+## Live validation
+
+The corrected image booted through stock's app-only OTA without changing the
+partition table. Saved personal Wi-Fi and the privately provisioned API key
+survived a stock return, a second installation and an encrypted native OTA.
+Plaintext OTA fallback was disabled for the native OTA test.
+
+- Initial bounded trial returned automatically to stock 1.5.13 after about
+  15 minutes, without physical intervention. Visible network and gateway
+  settings matched the pre-trial backup. No forced hung-loop RTC or physical
+  power-cut test was performed.
+- Corrected native delivery: 9,100 advertisements / 37 devices in 90 seconds,
+  including Flower Care and the kettle. Unknown-type 127 packets demonstrate
+  the Nordic UART path reaching the native API.
+- Native ESP32 GATT read: Flower Care battery 45%, firmware 3.3.5. Another
+  6,124 passive advertisements arrived in the following minute.
+- After encrypted OTA/reboot: 9,451 advertisements / 35 devices in 90 seconds;
+  repeat battery read 44%, followed by 6,430 advertisements in one minute.
+  Neither GATT test wrote sensor characteristics or used the host adapter.
+- Native captures contain temperature, illuminance, soil moisture and
+  conductivity MiBeacon objects. The two radios share one native scanner
+  identity; these counts are not a per-radio reception comparison.
+
+Home Assistant onboarding passed. Its own Xiaomi BLE battery poll through the
+proxy read **44%**; fresh plant measurements and kettle advertisements were
+confirmed. The old MQTT gateway integration was disabled, leaving the broker
+untouched. The acceptance command completed with an encrypted API response
+and no recovery errors. Acceptance metadata has not been independently read
+back. Upstream Xiaomi BLE polling remains once per day.
+
+**Open regression:** MyCO2 measurements stopped during migration. It is absent
+from two native gateway captures; local host advertisements contain no sensor
+payload. Active-scanning dependence is being tested. This blocks release and
+completion of the migration.
+
+Physical reset gestures,
+SmartConfig/Improv, LED feedback and Ethernet remain outside these tests.
+
 ## Corrected candidate
 
 Source `5ae3c82`, [hosted build](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/actions/runs/43540526377).
@@ -7,7 +45,7 @@ The unknown address-type marker is now 127 with a compile-time one-byte limit.
 App size remains **1,035,696 bytes**; SHA256
 `bf8dc77cab2cae8eae64767c464b286ffb64c27eda6db7dd8f39f61cf1f6b9fd`.
 Offline checks, original-layout preflight and known-private-value audit passed.
-Installed HA decoder tests also passed for marker 127. Hardware trial pending.
+Installed HA decoder tests also passed for marker 127. Corrected hardware trial passed the checks above.
 
 ## Compact native build
 
@@ -16,8 +54,8 @@ Source commit `c2826f1`, pinned ESPHome 2026.10.2 / IDF 5.5.6.
 passed. App-only size **1,035,696 bytes**; original-slot margin **12,880 bytes**.
 SHA256: `e3db7976d02dc8227583b9d2bd518d6af5f5a98bc05c2cfbb02c7a1ae76334b0`.
 First bounded trial booted and imported saved Wi-Fi, provisioned its private
-API key, and reconnected with encryption. It remains unaccepted pending timed
-recovery. Raw Bluetooth delivery exposed a C++ serializer size assumption:
+API key, and reconnected with encryption. It was left unaccepted and returned automatically to stock 1.5.13 after
+about 15 minutes. Visible stock network/gateway settings matched the backup. Raw Bluetooth delivery exposed a C++ serializer size assumption:
 marker 255 requires two bytes, but the optimized batch calculator reserves one.
 The next candidate uses 127 and retains the connection type-resolution guard.
 No GATT read succeeded during this first trial because delivery was interrupted.
@@ -51,10 +89,10 @@ lookup. Application logging is ERROR; the optional gateway uptime entity was
 removed. Full C99 formatting and WPA2/WPA3 remain. No MQTT or broker importer.
 The original-layout recovery copy replaces the previously proposed repartition.
 
-Not yet validated: hardware credential import and API onboarding, native GATT
-and Nordic delivery, timed recovery, ordinary encrypted OTA, SmartConfig/Improv,
-button hardware and LED feedback. Ethernet remains disabled in this Wi-Fi
-profile. No downloadable firmware release is advertised.
+Not yet validated: SmartConfig/Improv, button hardware and LED feedback,
+forced hung-loop RTC recovery and physical interruption during copying.
+Ethernet remains disabled in this Wi-Fi profile. The initial candidate below
+is superseded by the corrected candidate; it must not be installed.
 
 ## Emulator investigation — inconclusive
 

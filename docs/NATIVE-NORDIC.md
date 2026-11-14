@@ -69,9 +69,9 @@ HA scanner decoder in a separate process with synthetic packets; it does not
 contact HA or Bluetooth. This establishes software compatibility, not live
 radio delivery or a successful GATT connection.
 
-Hardware acceptance still needs native Nordic plant/kettle/other-device frames,
-ESP32 GATT battery reads, API reconnection, full queues/disconnect behavior,
-and recovery. Only then should the HA owner remove this gateway's old
-`ab_ble_gateway` config entry. A broker used by other devices is outside this
-migration's scope. Current stock firmware continues using its existing path
-until the new firmware is actually installed and accepted.
+Native plant/kettle delivery, ESP32 GATT, encrypted OTA/reconnection and timed
+stock recovery have now passed hardware trials; HA independently read the plant
+battery through the proxy. The old `ab_ble_gateway` entry is disabled and the
+broker remains untouched. MyCO2 reception is an open regression blocking release.
+Full-queue backpressure and every physical recovery path have not been exercised
+on hardware. See [validation](VALIDATION.md) for the exact boundaries.

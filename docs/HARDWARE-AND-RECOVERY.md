@@ -6,7 +6,7 @@ mapping. The Nordic firmware is left intact.
 
 | Function | Evidence / status |
 | --- | --- |
-| ESP32 | Classic ESP32 with 4 MiB flash; diagnostic GATT reads worked alongside Nordic scanning. ESPHome proxy acceptance is still pending. |
+| ESP32 | Classic ESP32 with 4 MiB flash; native ESPHome GATT reads and concurrent Nordic delivery passed hardware tests. |
 | Nordic UART | ESP RX32 / TX33, 115200. Stock Nordic 1.1.3 replies to AT commands and streams advertisements. |
 | Nordic GATT | Not demonstrated through the stock UART protocol. `AT+ACT1` requests scan responses, not GATT connections. No Nordic SWD/DFU route or firmware backup has been validated. |
 | Ethernet | Installed firmware uses LAN87xx, PHY address 1, MDC23 / MDIO18, output clock GPIO17. See trace below. |
@@ -33,7 +33,8 @@ copy for recovery. The original source remains intact through the copy.
 
 No partition-table or bootloader rewrite is needed. Never send a merged
 ESPHome factory image to the stock application-only OTA endpoint. Host tests
-model interrupted copies; a bounded hardware trial is in progress.
+model interrupted copies; normal first boot and timed stock return passed
+hardware tests. Physical power interruption was not tested.
 
 The recovery wrapper selects verified stock for the next boot and arms an RTC
 guard at entry to `app_main`, before ESPHome initializes preferences or decides
@@ -43,7 +44,9 @@ cannot return to stock. Component setup alone cannot establish this protection:
 safe mode can skip it. Faults before `app_main` remain outside this guard.
 Acceptance is a separate operation.
 The old diagnostic firmware's two timed stock returns succeeded, but this
-ESPHome implementation is undergoing its first hardware trial. Linker wrappers block whole-default-NVS
+ESPHome implementation returned to stock automatically in its first trial,
+with visible settings unchanged. This did not separately force a hung-loop
+RTC reset or a physical power interruption. Linker wrappers block whole-default-NVS
 erasure so upstream preference recovery cannot erase vendor configuration.
 An intentional ESPHome settings reset uses a namespace-specific operation.
 
