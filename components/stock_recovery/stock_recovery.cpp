@@ -21,6 +21,13 @@ extern "C" esp_err_t __wrap_nvs_flash_erase_partition(const char *partition_labe
 namespace esphome::stock_recovery {
 static const char *const TAG = "stock_recovery";
 static constexpr uint32_t TRIAL_MS = 900000;
+#ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
+static constexpr uint32_t ACCEPTANCE_KEY = 0x58424702;
+static constexpr const char *ACCEPTANCE_NVS_KEY = "1480738562";
+#else
+static constexpr uint32_t ACCEPTANCE_KEY = 0x58424701;
+static constexpr const char *ACCEPTANCE_NVS_KEY = "1480738561";
+#endif
 // Populated before ESPHome creates its loop task or initializes preferences.
 // Component setup (including this component) can be skipped in safe mode.
 static const esp_partition_t *early_stock;
@@ -127,7 +134,7 @@ void StockRecovery::setup() {
     return;
   }
   // Change this key for every candidate that needs fresh acceptance testing.
-  this->preference_ = global_preferences->make_preference<bool>(0x58424701);
+  this->preference_ = global_preferences->make_preference<bool>(ACCEPTANCE_KEY);
   this->preference_.load(&this->accepted_);
   ESP_LOGI(TAG, "Stock selected for recovery; candidate accepted previously: %s", YESNO(this->accepted_));
 }
@@ -168,7 +175,7 @@ bool StockRecovery::reset_settings() {
   esp_err_t err = nvs_erase_all(handle);
   // The trial acceptance marker is firmware safety metadata, not user settings.
   const bool accepted = true;
-  if (err == ESP_OK) err = nvs_set_blob(handle, "1480738561", &accepted, sizeof(accepted));
+  if (err == ESP_OK) err = nvs_set_blob(handle, ACCEPTANCE_NVS_KEY, &accepted, sizeof(accepted));
   if (err == ESP_OK) err = nvs_commit(handle);
   nvs_close(handle);
   if (err != ESP_OK || !this->select_proxy_()) {

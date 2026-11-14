@@ -7,6 +7,11 @@ on:
         description: Optional public X.509 certificate (PEM) for encrypted build evidence
         required: false
         type: string
+      diagnostic:
+        description: Build the optional Nordic serial diagnostic profile
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -33,7 +38,11 @@ jobs:
           /tmp/nordic
           g++ -std=c++17 -Wall -Wextra -Werror tests/stock_copy.cpp -o /tmp/stock-copy
           /tmp/stock-copy
+          g++ -std=c++17 -Wall -Wextra -Werror tests/diagnostic_lease.cpp -o /tmp/diagnostic-lease
+          /tmp/diagnostic-lease
       - name: Compile public source
+        env:
+          AB_BUILD_CONFIG: ${{ inputs.diagnostic && 'xbg-proxy-diagnostic.yaml' || 'xbg-proxy.yaml' }}
         run: ./build.sh > build.log 2>&1
       - name: Build log
         if: always()

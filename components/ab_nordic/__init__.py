@@ -3,6 +3,7 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import uart, bluetooth_proxy
 from esphome.const import CONF_ID
+from esphome.components import serial_proxy
 
 DEPENDENCIES = ["uart", "bluetooth_proxy", "esp32"]
 ns = cg.esphome_ns.namespace("ab_nordic")
@@ -10,6 +11,7 @@ AbNordic = ns.class_("AbNordic", cg.Component, uart.UARTDevice)
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(AbNordic),
     cv.Required("proxy_id"): cv.use_id(bluetooth_proxy.BluetoothProxy),
+    cv.Optional("serial_proxy_id"): cv.use_id(serial_proxy.SerialProxy),
 }).extend(
     cv.COMPONENT_SCHEMA
 ).extend(uart.UART_DEVICE_SCHEMA)
@@ -23,6 +25,9 @@ async def to_code(config):
     await cg.register_component(var, config)
     await uart.register_uart_device(var, config)
     cg.add(var.set_proxy(await cg.get_variable(config["proxy_id"])))
+    if "serial_proxy_id" in config:
+        cg.add_define("AB_NORDIC_SERIAL_DIAGNOSTICS")
+        cg.add(var.set_serial_proxy(await cg.get_variable(config["serial_proxy_id"])))
     bluetooth_proxy.enable_advertisement_filter()
     # Unknown address types from Nordic-only advertisements must never reach
     # Bluedroid as a guessed public/random address. Keep upstream error handling.

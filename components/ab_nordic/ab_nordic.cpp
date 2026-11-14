@@ -19,6 +19,9 @@ void AbNordic::setup() {
 }
 void AbNordic::loop() {
   const uint32_t now = millis();
+#ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
+  if (this->diagnostics_loop_(now)) return;
+#endif
   if (this->start_stage_ < 2) {
     if (now - this->start_time_ >= 100) {
       this->write_str(this->start_stage_ == 0 ? "AT+ACT0\r\n" : "AT+SCAN2\r\n");
@@ -49,6 +52,49 @@ void AbNordic::loop() {
              static_cast<unsigned>(this->parser_.malformed));
   }
 }
+#ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
+bool AbNordic::begin_diagnostics() {
+  if (!this->serial_ || this->start_stage_ < 2 || !this->lease_.begin(millis())) return false;
+  // The supported client arms before subscribing. Do not inject bytes if a raw
+  // subscriber already owns the wire; that client controls scan pause itself.
+  if (!this->serial_->get_api_connection()) this->write_str("AT+SCAN0\r\n");
+  this->dropped_ += this->batch_.advertisements_len;
+  this->batch_.advertisements_len = 0;
+  this->parser_ = {};
+  return true;
+}
+bool AbNordic::diagnostics_loop_(uint32_t now) {
+  if (!this->serial_) return false;
+  auto *owner = this->serial_->get_api_connection();
+  // Also yield immediately to third-party subscribers. The supplied client
+  // always arms first, so even a subscribe/unsubscribe within one loop pass
+  // has a timeout and cannot leave scanning stopped indefinitely.
+  if (owner && !this->lease_.active()) this->lease_.begin(now);
+  if (this->lease_.finished(now, owner != nullptr)) {
+    if (owner) this->serial_->serial_proxy_request(owner, api::enums::SERIAL_PROXY_REQUEST_TYPE_UNSUBSCRIBE);
+    this->resume_scanning_(now);
+    return true;
+  }
+  return this->lease_.active() || owner != nullptr;
+}
+void AbNordic::resume_scanning_(uint32_t now) {
+  // Restore host framing only; diagnostic clients must not change Nordic's
+  // persistent baud/firmware/configuration. No reset/DFU/SWD pins are driven.
+  this->parent_->set_baud_rate(115200);
+  this->parent_->set_data_bits(8);
+  this->parent_->set_stop_bits(1);
+  this->parent_->set_parity(uart::UART_CONFIG_PARITY_NONE);
+  this->parent_->load_settings(false);
+  uint8_t discard;
+  for (unsigned i = 0; i < 4096 && this->available(); ++i) this->read_byte(&discard);
+  this->parser_ = {};
+  this->dropped_ += this->batch_.advertisements_len;
+  this->batch_.advertisements_len = 0;
+  this->write_str("\r\nAT+SCAN0\r\n");
+  this->start_stage_ = 0;
+  this->start_time_ = now;
+}
+#endif
 void AbNordic::queue_(const xbg_ad &ad) {
   auto *client = this->proxy_->get_api_connection();
   if (client != this->batch_client_) {

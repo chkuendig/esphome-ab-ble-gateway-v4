@@ -66,6 +66,7 @@ not establish identical wiring.
 - [Hardware and Ethernet reset evidence](docs/HARDWARE-AND-RECOVERY.md)
 - [Installed-image Ethernet evidence](tools/installed-network-evidence.json)
 - [Native Nordic delivery and address-type handling](docs/NATIVE-NORDIC.md)
+- [Optional Nordic UART diagnostic profile](docs/NORDIC-SERIAL-DIAGNOSTICS.md)
 
 ## Build and checks
 
