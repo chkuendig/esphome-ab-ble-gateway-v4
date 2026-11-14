@@ -17,7 +17,8 @@ subscriber discards the old subscriber's unsent batch.
 
 ESP32 scanning and native GATT remain upstream ESPHome components. Both radios
 appear as **one logical HA scanner**, not two independent adapter identities.
-The per-radio packet counters are logged by the Nordic component, but native
+The Nordic component has counters logged at INFO (omitted by the compact
+ERROR profile), but native
 HA packet records do not distinguish which physical receiver heard a frame.
 
 ## Address types and connections
@@ -30,9 +31,14 @@ The native advertisement-filter hook observes genuine ESP32 scan results and
 returns true so their normal delivery continues. It remembers up to 256
 address/type pairs for ten minutes in RAM, with bounded replacement and
 millisecond-clock rollover handling. Nordic packets use that observed type
-when known; otherwise they carry **255 (unknown)** in the API's uint32 field.
+when known; otherwise they carry **127 (unknown)** in the API's uint32 field.
 Unknown packets still supply passive measurements. This sentinel is a local
 firmware convention, not a new upstream per-packet connectability flag.
+The first live trial exposed a serialization limit missed by Python-only
+round-trip tests: ESPHome's optimized C++ batch size calculator allows only
+one byte for a nonzero address type. The initial marker 255 used two bytes,
+truncating batches. Marker 127 remains outside real types 0–3 and fits that
+contract; a compile-time assertion prevents regression.
 
 The tested HA libraries (`aioesphomeapi 46.25.0`, `bleak-esphome 4.0.0`,
 `habluetooth 7.1.2`) preserve unknown type and still decode service data.

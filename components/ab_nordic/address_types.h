@@ -6,7 +6,11 @@
 namespace esphome::ab_nordic {
 // UART carries event type, not address type. Preserve that distinction on the
 // native API's uint32 address_type field. Never derive type from MAC/OUI/bits.
-constexpr uint8_t UNKNOWN_ADDRESS_TYPE = 0xff;
+// ESPHome's optimized raw-advertisement size calculator reserves one varint
+// byte for this field. 255 needs two bytes and truncates a batch on the wire.
+// 127 remains outside the controller's real types (0..3), without that issue.
+constexpr uint8_t UNKNOWN_ADDRESS_TYPE = 0x7f;
+static_assert(UNKNOWN_ADDRESS_TYPE > 3 && UNKNOWN_ADDRESS_TYPE < 128);
 inline uint8_t resolve_address_type(unsigned requested, uint8_t observed) {
   if (requested <= 3) return static_cast<uint8_t>(requested);
   return observed <= 3 ? observed : UNKNOWN_ADDRESS_TYPE;

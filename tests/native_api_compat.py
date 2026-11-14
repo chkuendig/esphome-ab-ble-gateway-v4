@@ -20,7 +20,7 @@ class OfflineManager(BluetoothManager):
 class NativeApiCompatibility(unittest.IsolatedAsyncioTestCase):
     async def test_passive_data_preserves_unknown_and_known_address_types(self):
         set_manager(OfflineManager())
-        for address_type in (255, 0, 1):
+        for address_type in (127, 255, 0, 1):
             with self.subTest(address_type=address_type):
                 scanner = ESPHomeScanner("02:00:00:00:00:01", "offline-native-test", connectable=True)
                 message = BluetoothLERawAdvertisementsResponse()

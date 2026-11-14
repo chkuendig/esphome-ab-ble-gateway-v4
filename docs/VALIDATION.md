@@ -1,69 +1,51 @@
-# Offline validation — 2026-11-14
+# Validation — 2026-11-14
 
-The generic Wi-Fi prototype compiles with the pinned ESPHome 2026.10.2 / IDF
-5.5.6 builder. Application size: **1,237,744 bytes**. SHA256:
-`305d40b2361a44c7efa6742f708a1907206881aa13730625c1be83e43e63c019`.
-No application from this repository has been installed on the gateway.
+## Compact native build
 
-Completed checks:
+Source commit `c2826f1`, pinned ESPHome 2026.10.2 / IDF 5.5.6.
+[Hosted build and checks](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/actions/runs/43539136086)
+passed. App-only size **1,035,696 bytes**; original-slot margin **12,880 bytes**.
+SHA256: `e3db7976d02dc8227583b9d2bd518d6af5f5a98bc05c2cfbb02c7a1ae76334b0`.
+First bounded trial booted and imported saved Wi-Fi, provisioned its private
+API key, and reconnected with encryption. It remains unaccepted pending timed
+recovery. Raw Bluetooth delivery exposed a C++ serializer size assumption:
+marker 255 requires two bytes, but the optimized batch calculator reserves one.
+The next candidate uses 127 and retains the connection type-resolution guard.
+No GATT read succeeded during this first trial because delivery was interrupted.
 
-- Host C++ tests: button timing boundaries, debounce, repeated hold,
-  triple-click expiry, startup-held button and clock rollover.
-- Native Nordic host tests: binary UART framing with embedded CR/LF, repeated
-  frames, MAC byte order, signed RSSI, address-type observation/update/expiry,
-  bounded eviction, unknown-type resolution/rejection and clock rollover.
-- Native API compatibility test in a separate offline process using the
-  installed `aioesphomeapi 46.25.0`, `bleak-esphome 4.0.0`, and
-  `habluetooth 7.1.2`: protobuf round trip and actual scanner decoding preserve
-  unknown/public/random address types, RSSI and service data. No HA API,
-  adapter registration, network/radio setup or running HA state modification.
-- Twelve Python tests: settings-record layout and input limits, rejecting
-  unsupported enterprise Wi-Fi/empty keys, publication audit detection, and
-  migration integrity checks for damaged backups/apps, overlapping partitions,
-  moved settings, and interrupted partition-table writes. Emulator checkpoint
-  tests also check preserved bootloader/NVS/PHY bytes, app placement and OTA
-  selection isolated from the rest of flash.
-- Tracked source and compiled OTA application checked against known private
-  network/device values and both old and newly staged keys: no matches.
-  This checks known values, not every possible secret.
-- ESPHome's preferences-open failure path disassembled: its NVS erase call
-  reaches `__wrap_nvs_flash_erase`, which refuses whole-default-NVS erasure.
-- Linked startup path disassembled: IDF's `main_task` calls `__wrap_app_main`,
-  which prepares stock selection and the RTC guard before calling ESPHome's
-  real `app_main`. This fixes reliance on ordinary component setup, which safe
-  mode can skip. It is compile/link evidence, not a demonstrated watchdog reset.
-- Generated defines include runtime-key OTA and encryption-required guards.
-- Linked Bluetooth open call reaches `__wrap_esp_ble_gattc_open`; unknown
-  address types are resolved from ESP32 observations or rejected before the
-  controller call. No MQTT or legacy MessagePack-packer symbols remain.
-- Application checksum/hash validation passes. It fits the proposed 1.5 MiB
-  OTA slots but exceeds both current 1 MiB stock OTA slots.
+Completed offline checks:
 
-The full native migration removes MQTT, broker import and the legacy MessagePack
-encoder. Nordic advertisements now use the existing encrypted Bluetooth API,
-including explicit handling of the address type omitted by stock UART. This
-saves **100,944 bytes** against the preceding 1,338,688-byte build, while still
-exceeding the original 1 MiB slots by **189,168 bytes**. API Noise and
-runtime-key encrypted OTA remain enabled. No feature claim depends on a broker.
+- Thirteen Python tests cover settings records, private-value audit, image
+  integrity, layout preservation, exact 1 MiB boundary and 16-byte overflow,
+  and emulator fixture construction.
+- C++ gesture tests cover debounce, hold/click boundaries and clock rollover.
+- Nordic protocol/cache tests cover binary framing, byte order, signed RSSI,
+  observed/unknown address types, eviction, expiry and connection rejection.
+- New stock-copy failure injection covers every operation, partial erase/write,
+  damaged source/destination, retry, region overlap and flash boundaries. The
+  original stock source remains unchanged and a partial copy is never selected.
+- Image checksum/appended hash and SDK feature checks passed. GATT client,
+  full Newlib, encrypted API/OTA and native Bluetooth proxy remain enabled.
+- Downloaded build evidence was decrypted locally. Source and app audit against
+  17 known private patterns found zero matches. This checks known values only.
+- Real-backup preflight passes against two identical 4 MiB device backups:
+  both original OTA slots fit, no partition-table change, NVS/PHY preserved.
+- Linked recovery wrapper selects verified stock and arms its guard before
+  ESPHome startup. NVS erase wrappers protect stock settings. Bluetooth open
+  wrapper resolves unknown address type from actual ESP32 observations.
+- Earlier offline native API compatibility check used aioesphomeapi 46.25.0,
+  bleak-esphome 4.0.0 and habluetooth 7.1.2 to verify raw advertisement decoding.
 
-The new [migration preflight](MIGRATION-PREFLIGHT.md) passes against the two
-identical development backups and this candidate. It explicitly reports that
-remote installation is not ready. A separate read-only inspection of saved NVS
-found valid page headers, 63 empty entries in the active page and one empty
-page; there is space for the small settings records without replacing NVS.
-These are backup/offline observations, not a live migration or write test.
+Size reduction retains assertion checks but removes their strings, Bluetooth
+stack debug output, unused GATT server, filesystem/stdio VFS and error-name
+lookup. Application logging is ERROR; the optional gateway uptime entity was
+removed. Full C99 formatting and WPA2/WPA3 remain. No MQTT or broker importer.
+The original-layout recovery copy replaces the previously proposed repartition.
 
-The size checker warns about the 960 KiB factory partition: it is reserved
-for the preserved stock application, not ESPHome. The builder's merged
-`firmware.factory.bin` is **not an installation artifact** for this layout;
-never flash it. A safe installer has not been implemented. No downloadable
-binary release is advertised yet.
-
-Not validated: first-boot credential import on hardware, SmartConfig/Improv,
-physical reset behavior and LED feedback, Ethernet startup, ESPHome GATT,
-concurrent Nordic scanning with native delivery, new trial rollback, ordinary
-OTA and partition migration. The native transport is implemented and tested
-offline, but no hardware acceptance or HA integration retirement has occurred.
+Not yet validated: hardware credential import and API onboarding, native GATT
+and Nordic delivery, timed recovery, ordinary encrypted OTA, SmartConfig/Improv,
+button hardware and LED feedback. Ethernet remains disabled in this Wi-Fi
+profile. No downloadable firmware release is advertised.
 
 ## Emulator investigation — inconclusive
 

@@ -3,11 +3,11 @@
 Reusable ESPHome firmware for the April Brother BLE Gateway V4: ESP32 Bluetooth
 GATT connections alongside the existing Nordic advertising receiver.
 
-**Development prototype. No installable release yet.** The development gateway
-still runs stock firmware. The proposed ESPHome image requires a flash-layout
-migration; it is not a drop-in upload for the vendor OTA endpoint. Do not flash
-an application or merged factory image from this repository without a completed
-migration and recovery procedure.
+**Development prototype. No installable release yet.** The compact native build
+fits the inspected device's original 1 MiB OTA slots. A bounded hardware trial
+is in progress; permanent installation has not been accepted. Use only an
+app-only image through the verified migration procedure. Never upload a merged
+factory image to the vendor OTA endpoint.
 
 ## Device settings stay on the device
 
@@ -22,8 +22,7 @@ The preferred migration is first-boot import: back up settings while stock
 still runs, preserve NVS during installation, then let ESPHome copy the saved
 credentials and reconnect. Verify the persisted settings and network before
 accepting the firmware trial. Optional private pre-staging records can also be
-prepared, but their writer and the partition migration are not implemented
-yet. Do not confuse preparation with completed device provisioning.
+prepared, but no separate record writer is required by first-boot import. Do not confuse preparation with completed device provisioning.
 
 API and OTA use a per-device key held in NVS, not a key compiled into public
 firmware. A deliberate settings reset clears ESPHome settings and suppresses
@@ -40,9 +39,14 @@ See [settings migration and publication rules](docs/SETTINGS-AND-MIGRATION.md).
   ESP32 observations resolve them before GATT connections. No MQTT bridge.
 - GPIO12 configuration button: ten-second hold resets settings; triple-click
   starts Wi-Fi SmartConfig. UART0 Improv provisioning is also enabled.
-- Preserved stock image selection and a bounded trial watchdog at entry to
-  `app_main`, before ESPHome preferences, safe mode or component setup.
-  These new ESPHome paths need live validation.
+- Original flash layout retained. First boot copies hash-verified current
+  stock from the other OTA slot into the existing factory slot, writing the
+  header last and verifying the copy before selecting it for recovery.
+- Bounded trial watchdog at entry to `app_main`, before ESPHome preferences,
+  safe mode or component setup. Live validation is in progress.
+- Compact profile: error-level application logs, no gateway uptime entity,
+  no GATT server, filesystem/stdio VFS or Bluetooth stack debug strings.
+  GATT client, full C99 formatting, WPA2/WPA3 and encrypted API/OTA remain.
 
 These are reusable components, but the hardware profile and recovery image
 check currently target the inspected stock 1.5.13 application. Other V4 board
@@ -76,7 +80,12 @@ g++ -std=c++17 -Wall -Wextra -Werror tests/native_nordic.cpp /tmp/ab-protocol.o 
 ./build.sh
 ```
 
+The manual GitHub workflow runs the same checks on a hosted runner. Optional
+build artifacts are encrypted to a supplied public recipient certificate;
+no private settings or plaintext firmware are uploaded. The measured build
+is **1,035,696 bytes**, leaving **12,880 bytes** in either original OTA slot.
+
 Never publish NVS images, full-flash backups, private staging records or older
 personalized diagnostic builds. Even a generic binary needs a publication
 check against known private values before upload. Compile success is not a
-hardware acceptance test or evidence that a partition migration is safe.
+hardware acceptance test.

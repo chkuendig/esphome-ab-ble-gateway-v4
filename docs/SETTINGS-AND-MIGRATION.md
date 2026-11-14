@@ -30,8 +30,10 @@ ESPHome versions. Recheck the upstream preference layout before upgrading.
 
 Keep stock's working Wi-Fi settings in place. After a backed-up, recoverable
 application migration, `ab_settings` copies them into normal ESPHome
-preferences before Wi-Fi starts, commits them and lets Wi-Fi reconnect. The
-original `storage` namespace stays untouched for rollback. Verify reconnection,
+preferences before Wi-Fi starts, commits them and lets Wi-Fi reconnect. Stock credentials and broker settings remain intact for rollback. The only
+vendor-settings write restores the standard vendor OTA feed when the stored
+URL contains our installer's `/esphome-migration/` marker; unrelated custom
+feeds are untouched. Verify reconnection,
 persistence and API onboarding before accepting the firmware trial.
 
 This needs no arbitrary NVS write endpoint in stock. The inspected stock HTTP
@@ -54,22 +56,18 @@ preference records has been established.
    The tool reads `stock-info.json` and `stock-connection.json`, generates a
    random per-device API key, and writes a mode-0600 file. It refuses to
    overwrite an existing bundle. It makes no device changes.
-3. If pre-staging is selected, the future installer must verify the target MAC and stock image/layout,
-   apply these records through NVS APIs, preserve other namespaces, commit,
-   and verify readback before selecting the replacement firmware. Never
-   replace the whole NVS partition with a newly generated settings partition.
-4. Only then perform the separately validated application/layout migration.
-   The current proposed partition-table change has a power-loss window; a
-   settings backup alone does not make it remotely recoverable.
-5. Reconnect over the configured network, pair using the privately staged API
-   key, verify BLE traffic/GATT and recovery, then accept the trial firmware.
+3. The current path imports Wi-Fi on first boot instead of applying the bundle
+   through an extra NVS writer. The original partition table and NVS remain.
+4. On first connection, use ESPHome's reserved encrypted provisioning session
+   (`ZERO_NOISE_PSK`), check the expected device identity, and set the random
+   per-device key using the API's base64-encoded key payload. Reconnect using
+   that private key before treating onboarding as complete.
+5. Verify BLE traffic, GATT, network persistence and stock recovery before
+   accepting the trial. Keep the key in a restricted local file for HA.
 
-**Steps 3–5 are not implemented or executed for the new ESPHome image.** The
-live development gateway remains stock. While physical recovery is unavailable,
-continue offline development rather than execute this unvalidated migration.
-The [offline migration preflight](MIGRATION-PREFLIGHT.md) now validates matching
-backups, application integrity and partition geometry, and reports the remaining
-installation blockers explicitly. It does not write the prepared records.
+A bounded trial is in progress. No permanent acceptance or HA integration
+retirement is claimed yet. The [offline preflight](MIGRATION-PREFLIGHT.md)
+validates the backups, app and original geometry, but is not a hardware test.
 
 ## Reset and provisioning
 

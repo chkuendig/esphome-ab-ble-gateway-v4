@@ -24,17 +24,16 @@ multicast discovery does not. API pairing is separate from BLE device bonding.
 
 ## Flash layout and recovery limits
 
-Stock has three 1 MiB application slots. Current stock is 944,400 bytes. The
-candidate retains a 960 KiB factory stock slot and two 1.5 MiB ESPHome slots,
-while preserving NVS at 0x9000, OTA metadata at 0xd000 and PHY data at 0xf000.
-The older 984,080-byte factory image does not fit the smaller factory slot;
-the verified current stock image must be copied and verified first.
+Stock has three 1 MiB application slots. Current stock is 944,400 bytes; the
+compact ESPHome candidate is 1,035,696 bytes. The candidate retains the entire
+original layout, including NVS at 0x9000, OTA metadata at 0xd000 and PHY at
+0xf000. First boot selects current stock in the other OTA slot, copies it into
+the existing factory slot with its header last, verifies it, then selects that
+copy for recovery. The original source remains intact through the copy.
 
-The partition table has not been changed. Replacing its sector is not an
-ordinary power-failure-safe application OTA. A generic settings bundle does
-not solve that failure window. Bootloader compatibility and a recoverable
-installer remain prerequisites. Never send a merged ESPHome factory image to
-the stock application-only OTA endpoint.
+No partition-table or bootloader rewrite is needed. Never send a merged
+ESPHome factory image to the stock application-only OTA endpoint. Host tests
+model interrupted copies; a bounded hardware trial is in progress.
 
 The recovery wrapper selects verified stock for the next boot and arms an RTC
 guard at entry to `app_main`, before ESPHome initializes preferences or decides
@@ -44,7 +43,7 @@ cannot return to stock. Component setup alone cannot establish this protection:
 safe mode can skip it. Faults before `app_main` remain outside this guard.
 Acceptance is a separate operation.
 The old diagnostic firmware's two timed stock returns succeeded, but this
-ESPHome implementation is untested. Linker wrappers block whole-default-NVS
+ESPHome implementation is undergoing its first hardware trial. Linker wrappers block whole-default-NVS
 erasure so upstream preference recovery cannot erase vendor configuration.
 An intentional ESPHome settings reset uses a namespace-specific operation.
 

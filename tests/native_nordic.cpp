@@ -33,6 +33,9 @@ int main() {
 
   assert(resolve_address_type(0, 1) == 0);
   assert(resolve_address_type(1, 0) == 1);
+  assert(resolve_address_type(UNKNOWN_ADDRESS_TYPE, 0) == 0);
+  assert(resolve_address_type(UNKNOWN_ADDRESS_TYPE, 1) == 1);
+  assert(resolve_address_type(UNKNOWN_ADDRESS_TYPE, UNKNOWN_ADDRESS_TYPE) == UNKNOWN_ADDRESS_TYPE);
   assert(resolve_address_type(255, 0) == 0);
   assert(resolve_address_type(255, 1) == 1);
   assert(resolve_address_type(255, 255) == UNKNOWN_ADDRESS_TYPE);
