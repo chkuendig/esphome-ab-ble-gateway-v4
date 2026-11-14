@@ -1,0 +1,19 @@
+# Optional native serial access. No changes to Nordic firmware or flash layout.
+packages:
+  base: !include xbg-proxy.yaml
+
+serial_proxy:
+  - id: nordic_serial
+    uart_id: nordic_uart
+    name: Nordic diagnostic UART
+    port_type: TTL
+
+ab_nordic:
+  serial_proxy_id: nordic_serial
+
+button:
+  - platform: template
+    name: Begin Nordic Diagnostics
+    entity_category: diagnostic
+    on_press:
+      - lambda: id(nordic).begin_diagnostics();
