@@ -1,30 +1,35 @@
-# Nordic as a separate Home Assistant scanner
+# nRF52832 as a separate Home Assistant scanner
 
 The default profile merges both radios into one logical ESPHome scanner. HA
-then cannot tell which radio heard a packet, and treats Nordic-only devices as
-connectable through the ESP32 even though the Nordic cannot connect.
+then cannot tell which radio heard a packet, and treats nRF52832-only devices as
+connectable through the ESP32 even though the nRF52832 cannot connect.
 
 The split profile keeps the two receivers apart:
 
 | HA scanner | Source | Radio | Connectable |
 |---|---|---|---|
 | ESPHome proxy (core `esphome`) | gateway Bluetooth MAC | ESP32 | yes (1 slot) |
-| `ab_nordic` (this repo) | gateway network MAC | Nordic, stock AT firmware | no |
+| `ab_nordic` (this repo) | gateway network MAC | nRF52832, stock AT firmware | no |
 
-No ESPHome API change is needed. The Nordic stream uses the existing encrypted
+The radio is the nRF52832 shown in the published V4 schematics; the chip
+marking has not been inspected on a unit. The firmware component (`ab_nordic`),
+the HA domain (`ab_nordic`) and the serial port name (`Nordic scanner`) are
+internal identifiers kept for compatibility.
+
+No ESPHome API change is needed. The nRF52832 stream uses the existing encrypted
 `serial_proxy`, read through Home Assistant's own ESPHome connection.
 
 ## Firmware: `xbg-proxy-split.yaml`
 
-- Adds a `serial_proxy` named **Nordic scanner** on the Nordic UART and sets
+- Adds a `serial_proxy` named **Nordic scanner** on the nRF52832 UART and sets
   `ab_nordic` to `serial_mode: split`.
-- At boot `ab_nordic` starts the Nordic scanner (`SCAN0 → ACT0 → SCAN2`,
+- At boot `ab_nordic` starts the nRF52832 scanner (`SCAN0 → ACT0 → SCAN2`,
   600 ms apart), also when a client is already subscribed.
 - While a client is subscribed, upstream `serial_proxy` is the only UART
   reader and forwards the unmodified binary SCAN2 stream. There is no lease:
   the HA client is permanent and never writes.
-- Without a client, `ab_nordic` reads and **drops** Nordic adverts (owner
-  decision): nothing Nordic-heard reaches the connectable ESP32 scanner.
+- Without a client, `ab_nordic` reads and **drops** nRF52832 adverts (owner
+  decision): nothing nRF52832-heard reaches the connectable ESP32 scanner.
 - When a client leaves, the firmware restores 115200 8N1 framing and
   restarts the scanner, in case the client changed either.
 - Separate firmware-acceptance key (`0x58424703`), so the 15-minute stock
@@ -42,9 +47,9 @@ Build with `AB_BUILD_CONFIG=xbg-proxy-split.yaml ./build.sh`, or select
    repository (`hacs.json` at the root), or copy `custom_components/ab_nordic`
    into HA's `custom_components`; restart HA. It requires the core `esphome`, `bluetooth` and `usb`
    integrations; `usb` registers HA's ESPHome serial-proxy transport.
-2. Add **April Brother Nordic Scanner** and choose the gateway. Only loaded
+2. Add **April Brother nRF52832 Scanner** and choose the gateway. Only loaded
    ESPHome entries exposing a `Nordic scanner` port are offered.
-3. HA shows a new Bluetooth adapter "*gateway* Nordic", next to the ESPHome
+3. HA shows a new Bluetooth adapter "*gateway* nRF52832", next to the ESPHome
    proxy and any local adapters.
 
 The integration opens
@@ -76,9 +81,9 @@ integration.
     records from 31 devices, 0 malformed. Releasing it restored dropping
     without a reboot.
   - With `ab_nordic` set up, HA lists three adapters: the host adapter, the
-    connectable ESPHome proxy and the non-connectable Nordic scanner. In one
-    snapshot the Nordic heard 43 devices and the ESP32 51; 12 were heard only by
-    the Nordic and are no longer offered as connectable through the ESP32.
+    connectable ESPHome proxy and the non-connectable nRF52832 scanner. In one
+    snapshot the nRF52832 heard 43 devices and the ESP32 51; 12 were heard only by
+    the nRF52832 and are no longer offered as connectable through the ESP32.
   - Reloading the HA entry released and re-claimed the port without errors.
     After 14 minutes the stream had 65,428 records, 0 malformed, one connect.
   - Not yet exercised: reconnection after a gateway reboot or Wi-Fi loss,

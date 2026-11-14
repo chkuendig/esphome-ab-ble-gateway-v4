@@ -1,4 +1,4 @@
-"""Diagnostics for the Nordic scanner."""
+"""Diagnostics for the nRF52832 scanner."""
 
 from __future__ import annotations
 

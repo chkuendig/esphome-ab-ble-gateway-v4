@@ -1,7 +1,7 @@
-"""April Brother BLE Gateway V4: the Nordic radio as its own Bluetooth scanner.
+"""April Brother BLE Gateway V4: the nRF52832 radio as its own Bluetooth scanner.
 
 With the xbg-proxy-split firmware, the gateway's ESP32 is the normal,
-connectable ESPHome Bluetooth proxy, and the Nordic's passive scan stream is
+connectable ESPHome Bluetooth proxy, and the nRF52832's passive scan stream is
 exposed raw over the encrypted ESPHome serial proxy. This integration reads it
 and registers a separate, non-connectable Home Assistant scanner.
 """
@@ -16,7 +16,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 
-from .const import CONF_ESPHOME_ENTRY_ID, CONF_PORT_NAME, DOMAIN, SOURCE_MODEL
+from .const import (
+    CONF_ESPHOME_ENTRY_ID,
+    CONF_PORT_NAME,
+    DOMAIN,
+    LEGACY_TITLE_SUFFIX,
+    RADIO_NAME,
+    SOURCE_MODEL,
+)
 from .scanner import NordicLink, NordicScanner, serial_proxy_url
 
 
@@ -30,7 +37,7 @@ type NordicConfigEntry = ConfigEntry[NordicRuntimeData]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bool:
-    """Set up the Nordic scanner for one gateway."""
+    """Set up the nRF52832 scanner for one gateway."""
     esphome_entry = hass.config_entries.async_get_entry(entry.data[CONF_ESPHOME_ENTRY_ID])
     if esphome_entry is None:
         raise ConfigEntryNotReady("The gateway's ESPHome entry no longer exists")
@@ -45,10 +52,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bo
             f"The gateway firmware has no serial proxy named {port_name!r} (split profile not installed)"
         )
 
-    # The ESPHome scanner uses the Bluetooth MAC; the Nordic scanner uses the
+    # The ESPHome scanner uses the Bluetooth MAC; the nRF52832 scanner uses the
     # gateway's network MAC, which the stock firmware also used for it.
     source = entry.unique_id or device_info.mac_address.upper()
-    name = f"{device_info.friendly_name or device_info.name} Nordic"
+    name = f"{device_info.friendly_name or device_info.name} {RADIO_NAME}"
+    if entry.title.endswith(LEGACY_TITLE_SUFFIX):  # Entries created by 0.1.0
+        hass.config_entries.async_update_entry(
+            entry, title=entry.title[: -len(LEGACY_TITLE_SUFFIX)] + f" {RADIO_NAME}"
+        )
     scanner = NordicScanner(source, name, None, False)
 
     device_registry = dr.async_get(hass)
@@ -76,7 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bo
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bool:
-    """Unload; the gateway firmware drops Nordic adverts while unsubscribed."""
+    """Unload; the gateway firmware drops nRF52832 adverts while unsubscribed."""
     return True
 
 

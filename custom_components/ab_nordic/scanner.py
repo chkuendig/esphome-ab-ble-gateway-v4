@@ -1,4 +1,4 @@
-"""Nordic scanner fed from the gateway's ESPHome serial proxy."""
+"""nRF52832 scanner fed from the gateway's ESPHome serial proxy."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class NordicScanner(BaseHaRemoteScanner):
-    """Passive, non-connectable scanner for the gateway's Nordic radio."""
+    """Passive, non-connectable scanner for the gateway's nRF52832 radio."""
 
     def async_on_adverts(self, adverts: list[NordicAdvert]) -> None:
         """Hand parsed advertisements to Home Assistant's Bluetooth manager."""
@@ -97,7 +97,7 @@ class NordicLink:
                 self.connected_since = time.time()
                 self.last_error = None
                 delay = RECONNECT_MIN_SECONDS
-                _LOGGER.info("Nordic scanner stream connected (%s)", self._scanner.name)
+                _LOGGER.info("nRF52832 scanner stream connected (%s)", self._scanner.name)
                 exc = await protocol.closed
                 self.connected = False
                 self.connected_since = None
@@ -111,11 +111,11 @@ class NordicLink:
 
     def _note_error(self, message: str) -> None:
         if message != self.last_error:
-            _LOGGER.warning("Nordic scanner %s: %s; retrying", self._scanner.name, message)
+            _LOGGER.warning("nRF52832 scanner %s: %s; retrying", self._scanner.name, message)
         self.last_error = message
 
     def stop(self) -> None:
-        """Release the serial proxy; the firmware then drops Nordic adverts."""
+        """Release the serial proxy; the firmware then drops nRF52832 adverts."""
         self._stopping = True
         if self._transport is not None:
             self._transport.close()

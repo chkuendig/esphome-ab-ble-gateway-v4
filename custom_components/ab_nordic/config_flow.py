@@ -8,16 +8,16 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntryState, ConfigFlow, ConfigFlowResult
 
-from .const import CONF_ESPHOME_ENTRY_ID, CONF_PORT_NAME, DEFAULT_PORT_NAME, DOMAIN
+from .const import CONF_ESPHOME_ENTRY_ID, CONF_PORT_NAME, DEFAULT_PORT_NAME, DOMAIN, RADIO_NAME
 
 
 class NordicConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for the Nordic scanner."""
+    """Handle a config flow for the nRF52832 scanner."""
 
     VERSION = 1
 
     def _gateways(self) -> dict[str, tuple[str, str]]:
-        """Loaded ESPHome entries exposing the Nordic scanner port."""
+        """Loaded ESPHome entries exposing the nRF52832 scanner port."""
         found: dict[str, tuple[str, str]] = {}
         for entry in self.hass.config_entries.async_entries("esphome"):
             if entry.state is not ConfigEntryState.LOADED:
@@ -40,7 +40,7 @@ class NordicConfigFlow(ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(source)
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
-                title=f"{name} Nordic",
+                title=f"{name} {RADIO_NAME}",
                 data={CONF_ESPHOME_ENTRY_ID: entry_id, CONF_PORT_NAME: DEFAULT_PORT_NAME},
             )
         return self.async_show_form(

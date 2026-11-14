@@ -1,4 +1,4 @@
-"""Parser for the April Brother Nordic scanner's binary SCAN2 stream.
+"""Parser for the April Brother nRF52832 scanner's binary SCAN2 stream.
 
 Pure Python without Home Assistant imports, so it can be unit tested alone.
 Mirrors components/ab_nordic/protocol.c. A record is
@@ -24,7 +24,7 @@ MAX_BUFFER = 4096
 
 @dataclass(slots=True, frozen=True)
 class NordicAdvert:
-    """One advertisement heard by the Nordic radio."""
+    """One advertisement heard by the nRF52832 radio."""
 
     address: str
     rssi: int

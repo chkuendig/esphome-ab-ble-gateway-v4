@@ -1,7 +1,7 @@
 # ESPHome — AB BLE Gateway V4
 
 Reusable ESPHome firmware for the April Brother BLE Gateway V4: ESP32 Bluetooth
-GATT connections alongside the existing Nordic advertising receiver.
+GATT connections alongside the existing nRF52832 advertising receiver.
 
 Start with the [project status and research handover](docs/PROJECT-STATUS.md)
 for the final architecture, released versus diagnostic builds, tested behavior,
@@ -17,10 +17,10 @@ through the native gateway after the sensor was power-cycled. Use only an
 app-only image through the verified migration procedure. Never upload a merged
 factory image to the vendor OTA endpoint.
 
-## Nordic as its own Home Assistant scanner
+## nRF52832 as its own Home Assistant scanner
 
 The optional `xbg-proxy-split.yaml` profile keeps the two radios apart: the
-ESP32 stays the connectable ESPHome Bluetooth proxy, and the Nordic becomes a
+ESP32 stays the connectable ESPHome Bluetooth proxy, and the nRF52832 becomes a
 separate, listen-only scanner through the `ab_nordic` custom integration in
 this repository. Install the integration from HACS or the Home Assistant
 Marketplace as a custom repository (`chkuendig/esphome-ab-ble-gateway-v4`,
@@ -83,7 +83,7 @@ not establish identical wiring.
 - [Installed-image Ethernet evidence](tools/installed-network-evidence.json)
 - [Native Nordic delivery and address-type handling](docs/NATIVE-NORDIC.md)
 - [Optional Nordic UART diagnostic profile](docs/NORDIC-SERIAL-DIAGNOSTICS.md)
-- [Nordic as a separate HA scanner (split profile + `ab_nordic` integration)](docs/NORDIC-SPLIT-SCANNER.md)
+- [nRF52832 as a separate HA scanner (split profile + `ab_nordic` integration)](docs/NORDIC-SPLIT-SCANNER.md)
 
 ## Build and checks
 
