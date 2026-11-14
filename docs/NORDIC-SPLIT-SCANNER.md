@@ -38,8 +38,9 @@ Build with `AB_BUILD_CONFIG=xbg-proxy-split.yaml ./build.sh`, or select
 
 ## Home Assistant: `custom_components/ab_nordic`
 
-1. Copy `custom_components/ab_nordic` into HA's `custom_components` and
-   restart HA. It requires the core `esphome`, `bluetooth` and `usb`
+1. Add this repository to HACS / the Marketplace as a custom *Integration*
+   repository (`hacs.json` at the root), or copy `custom_components/ab_nordic`
+   into HA's `custom_components`; restart HA. It requires the core `esphome`, `bluetooth` and `usb`
    integrations; `usb` registers HA's ESPHome serial-proxy transport.
 2. Add **April Brother Nordic Scanner** and choose the gateway. Only loaded
    ESPHome entries exposing a `Nordic scanner` port are offered.
