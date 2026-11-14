@@ -30,13 +30,29 @@ untouched. The acceptance command completed with an encrypted API response
 and no recovery errors. Acceptance metadata has not been independently read
 back. Upstream Xiaomi BLE polling remains once per day.
 
-**Open regression:** MyCO2 measurements stopped during migration. It is absent
-from two native gateway captures; local host advertisements contain no sensor
-payload. Active-scanning dependence is being tested. This blocks release and
-completion of the migration.
+**MyCO2 remains unavailable:** two native captures contained no packets from
+this device. A 90-second ESP32 active-scanning test also received none. A
+controlled return to exact stock 1.5.13 with unchanged visible settings then
+received 167 MQTT messages in 180 seconds, including 151 plant and 167 kettle
+frames, but zero MyCO2 frames (both raw-wire MAC search and decoded records).
+Stock therefore does not restore MyCO2 either; a migration regression has not
+been established. The sensor/reception issue remains unresolved, and MyCO2
+compatibility is not claimed as verified. The gateway was returned to the same
+verified ESPHome image after this comparison; its encrypted API reconnected
+with the existing key and remained responsive after 65 seconds. This also
+exercised the native stock-return button without physical intervention. HA
+reconnected automatically afterward and confirmed fresh plant readings and
+kettle advertisements through the proxy, without an HA restart or new poll.
 
 Physical reset gestures,
 SmartConfig/Improv, LED feedback and Ethernet remain outside these tests.
+
+The standalone provisioning helper additionally passed five mocked API tests:
+reserved-key bootstrap, base64-text key encoding, private-key reconnection,
+existing-key preservation, unexpected-firmware rejection and output-file
+protection. The temporary server passed a loopback-only preflight/download/hash,
+HEAD, unknown-path and private-file-permission check. These do not add a claim
+of a separate end-to-end migration using the standalone wrappers.
 
 ## Corrected candidate
 

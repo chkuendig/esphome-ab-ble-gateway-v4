@@ -1,7 +1,8 @@
 # Development rules
 
 Read README.md and docs/BUTTON-BEHAVIOR.md before changing recovery behavior.
-This is a development prototype, not a released hardware profile.
+This is a preview tested on one inspected stock profile, not a universal V4
+hardware profile. Preserve the documented validation limits.
 
 - Preserve Nordic firmware. ESP32 GATT and Nordic scanning are distinct.
 - Never commit credentials, generated firmware, flash backups or Ghidra

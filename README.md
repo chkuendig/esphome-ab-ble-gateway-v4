@@ -3,11 +3,13 @@
 Reusable ESPHome firmware for the April Brother BLE Gateway V4: ESP32 Bluetooth
 GATT connections alongside the existing Nordic advertising receiver.
 
-**Development prototype. No installable release yet.** The compact native build
+**Hardware-tested preview for the inspected stock profile.** See the
+[preview release](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/releases/tag/v0.1.0-preview.1)
+for the app-only image and its exact validation limits. The compact native build
 fits the inspected device's original 1 MiB OTA slots. Saved-network import, encrypted API/OTA, native Bluetooth delivery, GATT and
 timed stock return have passed hardware trials. Home Assistant now reads the
-plant battery through the proxy. **MyCO2 reception is still under investigation
-and blocks release.** Use only an
+plant battery through the proxy. MyCO2 is currently unavailable under both
+stock and ESPHome; its reception remains unresolved. Use only an
 app-only image through the verified migration procedure. Never upload a merged
 factory image to the vendor OTA endpoint.
 

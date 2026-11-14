@@ -67,15 +67,17 @@ preference records has been established.
 
 The inspected gateway completed onboarding, encrypted OTA and HA battery
 polling; its acceptance command was sent and the old gateway integration was
-disabled. MyCO2 reception remains an open regression. The
+disabled. MyCO2 reception is unresolved under both stock and ESPHome. The
 [offline preflight](MIGRATION-PREFLIGHT.md) validates the backups, app and
 original geometry, but is not a hardware test for another device.
 
 ## Migration helper commands
 
 These commands expose the same primitives used in the private hardware trial;
-the new standalone wrappers have syntax checks, not a separate end-to-end
-hardware trial. Binary publication remains blocked by the MyCO2 investigation.
+the standalone wrappers have syntax checks, five API provisioning mock tests
+and a loopback-only HTTP serving test (preflight, HEAD, image hash, unknown-path
+rejection and private file permissions), not a separate end-to-end hardware
+trial.
 They target only the inspected stock image and original partition layout.
 
 1. Preserve two matching full-flash backups and private stock `/info`,

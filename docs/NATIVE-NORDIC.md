@@ -72,6 +72,7 @@ radio delivery or a successful GATT connection.
 Native plant/kettle delivery, ESP32 GATT, encrypted OTA/reconnection and timed
 stock recovery have now passed hardware trials; HA independently read the plant
 battery through the proxy. The old `ab_ble_gateway` entry is disabled and the
-broker remains untouched. MyCO2 reception is an open regression blocking release.
+broker remains untouched. MyCO2 reception is unresolved under both stock and
+ESPHome; the stock comparison did not establish a migration regression.
 Full-queue backpressure and every physical recovery path have not been exercised
 on hardware. See [validation](VALIDATION.md) for the exact boundaries.
