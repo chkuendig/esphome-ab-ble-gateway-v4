@@ -12,6 +12,9 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(AbNordic),
     cv.Required("proxy_id"): cv.use_id(bluetooth_proxy.BluetoothProxy),
     cv.Optional("serial_proxy_id"): cv.use_id(serial_proxy.SerialProxy),
+    # diagnostic: 60 s leased raw access, Nordic merged into the ESP32 proxy.
+    # split: permanent raw stream for the HA ab_nordic scanner; dropped without it.
+    cv.Optional("serial_mode", default="diagnostic"): cv.one_of("diagnostic", "split", lower=True),
 }).extend(
     cv.COMPONENT_SCHEMA
 ).extend(uart.UART_DEVICE_SCHEMA)
@@ -26,7 +29,8 @@ async def to_code(config):
     await uart.register_uart_device(var, config)
     cg.add(var.set_proxy(await cg.get_variable(config["proxy_id"])))
     if "serial_proxy_id" in config:
-        cg.add_define("AB_NORDIC_SERIAL_DIAGNOSTICS")
+        cg.add_define("AB_NORDIC_SERIAL_SPLIT" if config["serial_mode"] == "split"
+                      else "AB_NORDIC_SERIAL_DIAGNOSTICS")
         cg.add(var.set_serial_proxy(await cg.get_variable(config["serial_proxy_id"])))
     bluetooth_proxy.enable_advertisement_filter()
     # Unknown address types from Nordic-only advertisements must never reach

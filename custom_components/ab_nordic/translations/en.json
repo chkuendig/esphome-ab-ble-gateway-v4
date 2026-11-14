@@ -1,0 +1,17 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "April Brother Nordic scanner",
+        "description": "Choose the gateway whose Nordic radio should become its own, listen-only Bluetooth scanner. The gateway must run the split firmware profile.",
+        "data": {
+          "esphome_entry_id": "Gateway"
+        }
+      }
+    },
+    "abort": {
+      "no_gateway": "No loaded ESPHome gateway exposes a \"Nordic scanner\" serial proxy. Install the xbg-proxy-split firmware first.",
+      "already_configured": "This gateway's Nordic scanner is already configured."
+    }
+  }
+}

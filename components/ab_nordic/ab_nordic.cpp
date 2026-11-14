@@ -5,7 +5,7 @@
 
 namespace esphome::ab_nordic {
 static const char *const TAG = "ab_nordic";
-#ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
+#ifdef AB_NORDIC_SERIAL_PROXY
 // SCAN0 restarts Nordic's scanner. A 100 ms restart sequence loses the later
 // commands; the stock firmware waits ~510 ms. Live UART A/B verified 600 ms.
 static constexpr uint32_t SCAN_COMMAND_DELAY_MS = 600;
@@ -29,6 +29,8 @@ void AbNordic::loop() {
 #ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
   if (this->diagnostics_loop_(now)) return;
 #endif
+  // Split mode keeps the startup sequence running even if a client subscribes
+  // early, so the client always receives an active SCAN2 stream.
   if (this->start_stage_ < 2) {
     if (now - this->start_time_ >= SCAN_COMMAND_DELAY_MS) {
       this->write_str(this->start_stage_ == 0 ? "AT+ACT0\r\n" : "AT+SCAN2\r\n");
@@ -36,6 +38,9 @@ void AbNordic::loop() {
       this->start_stage_++;
     }
   }
+#ifdef AB_NORDIC_SERIAL_SPLIT
+  if (this->split_loop_(now)) return;
+#endif
   uint8_t byte;
   xbg_ad ad;
   char line[160];
@@ -44,7 +49,13 @@ void AbNordic::loop() {
     if (!this->read_byte(&byte)) break;
     if (xbg_feed(&this->parser_, byte, &ad, line, sizeof(line)) == XBG_AD) {
       this->adverts_++;
+#ifdef AB_NORDIC_SERIAL_SPLIT
+      // Owner decision: without the HA ab_nordic client, Nordic advertisements
+      // are dropped, never merged into the connectable ESP32 scanner.
+      this->dropped_++;
+#else
       this->queue_(ad);
+#endif
     }
   }
   if (now - this->last_publish_ >= 250) {
@@ -59,6 +70,25 @@ void AbNordic::loop() {
              static_cast<unsigned>(this->parser_.malformed));
   }
 }
+#ifdef AB_NORDIC_SERIAL_SPLIT
+bool AbNordic::split_loop_(uint32_t now) {
+  if (!this->serial_) return false;
+  // While subscribed, upstream serial_proxy is the sole UART reader and sends
+  // the unmodified SCAN2 byte stream to the client. No lease: the HA client is
+  // permanent and read-only.
+  const bool owned = this->serial_->get_api_connection() != nullptr;
+  if (this->split_.released(owned)) {
+    ESP_LOGI(TAG, "Nordic scanner client released; restarting scan, dropping until resubscribed");
+    this->resume_scanning_(now);
+    return true;
+  }
+  if (owned) {
+    // Our parser state is stale once the client has consumed bytes.
+    this->parser_ = {};
+  }
+  return owned;
+}
+#endif
 #ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
 bool AbNordic::begin_diagnostics() {
   if (!this->serial_ || this->start_stage_ < 2 || !this->lease_.begin(millis())) return false;
@@ -84,6 +114,8 @@ bool AbNordic::diagnostics_loop_(uint32_t now) {
   }
   return this->lease_.active() || owner != nullptr;
 }
+#endif
+#ifdef AB_NORDIC_SERIAL_PROXY
 void AbNordic::resume_scanning_(uint32_t now) {
   // Restore host framing only; diagnostic clients must not change Nordic's
   // persistent baud/firmware/configuration. No reset/DFU/SWD pins are driven.
@@ -130,7 +162,11 @@ void AbNordic::flush_() {
   this->batch_.advertisements_len = 0;
 }
 void AbNordic::dump_config() {
+#ifdef AB_NORDIC_SERIAL_SPLIT
+  ESP_LOGCONFIG(TAG, "Nordic passive receiver: RX32 TX33, split scanner via serial proxy (dropped without client)");
+#else
   ESP_LOGCONFIG(TAG, "Nordic passive receiver: RX32 TX33, native encrypted Bluetooth API");
+#endif
 }
 }  // namespace esphome::ab_nordic
 
