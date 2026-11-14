@@ -106,8 +106,3 @@ button:
     entity_category: config
     on_press:
       - lambda: id(recovery).restore_stock();
-
-sensor:
-  - platform: uptime
-    name: Uptime
-    update_interval: 60s
