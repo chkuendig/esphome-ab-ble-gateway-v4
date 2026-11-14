@@ -99,3 +99,35 @@ convenient transport does not change those results or prove hidden commands.
 
 References: [ESPHome serial proxy](https://esphome.io/components/serial_proxy/),
 [network stock recovery](HARDWARE-AND-RECOVERY.md#return-to-stock--disaster-recovery).
+
+## Firmware identification research
+
+Two independent public-source investigations on 2026-11-14 found the strongest
+protocol match in [ABSniffer 528](https://wiki.aprbrother.com/en/AT_Commands_For_ABSniffer_528.html).
+The command spellings and version reply match that family. Our binary `SCAN2`
+record layout also matches the older [ZeroBeacon `SCAN4` format](https://wiki.aprbrother.com/en/ZeroBeacon.html).
+This identifies a protocol family, not an exact binary or its complete source
+ancestry. No matching public Nordic 1.1.3 image, generic GATT command interface
+or supported Nordic update procedure was found.
+
+A separate eight-second `SCAN1` hardware test produced 581 complete ASCII
+records. All used `MAC,RSSI,type,length,payload` fields. In this installed
+firmware the length is **decimal**: all 581 matched the decoded payload size.
+The ABSniffer wiki describes a hexadecimal length, so do not copy that detail
+into a decoder without checking the installed version. Four tomato broadcasts
+arrived through ESP32 during the capture. Automatic release restored binary
+Nordic reception and the API stayed responsive. This test did not alter either
+chip's firmware or initiate GATT.
+
+The vendor [described its sibling dongle as lacking HCI](https://bbs.aprbrother.com/t/1491).
+Historical [V4 support discussion](https://bbs.aprbrother.com/t/ab-ble-gateway-4-0/1509/3)
+says the Bluetooth firmware could not then be updated over the air. These are
+useful constraints, not proof about every later board or undocumented mode.
+String searches of inspected ESP32 applications found scan-control commands
+but no evidence of a Nordic updater; strings alone cannot prove code absent.
+
+Published schematics expose Nordic SWD, but the actual board and read protection
+remain unverified. An FT232RL is **not a confirmed SWD solution**: the inspected
+[upstream OpenOCD `ft232r` driver](https://github.com/openocd-org/openocd/blob/master/src/jtag/drivers/ft232r.c)
+registers JTAG only. Do not erase Nordic to unlock it; the ESP32 backup does not
+contain its firmware and no compatible recovery image has been established.
