@@ -3,6 +3,10 @@
 Reusable ESPHome firmware for the April Brother BLE Gateway V4: ESP32 Bluetooth
 GATT connections alongside the existing Nordic advertising receiver.
 
+Start with the [project status and research handover](docs/PROJECT-STATUS.md)
+for the final architecture, released versus diagnostic builds, tested behavior,
+Nordic firmware findings and the evidence needed to resume that investigation.
+
 **Hardware-tested preview for the inspected stock profile.** See the
 [preview release](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/releases/tag/v0.1.0-preview.1)
 for the app-only image and its exact validation limits. The compact native build
@@ -59,6 +63,7 @@ not establish identical wiring.
 
 ## Documentation
 
+- [Project status, Nordic research and future work](docs/PROJECT-STATUS.md)
 - [Offline validation and remaining hardware tests](docs/VALIDATION.md)
 - [Migration preflight and unattended-installation boundary](docs/MIGRATION-PREFLIGHT.md)
 - [Configuration button and reset behavior](docs/BUTTON-BEHAVIOR.md)

@@ -1,5 +1,12 @@
 # Validation — 2026-11-14
 
+This page retains the base migration history. The later optional diagnostic
+profile passed encrypted OTA, UART ownership/release/disconnect/timeout recovery
+and ASCII fingerprint tests; see [diagnostic validation](NORDIC-SERIAL-DIAGNOSTICS.md#validation-status).
+It is the accepted profile on the test unit. The published preview asset remains
+the normal proxy build below. See [project status](PROJECT-STATUS.md) for the
+consolidated endpoint and deferred work.
+
 ## Live validation
 
 The corrected image booted through stock's app-only OTA without changing the
