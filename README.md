@@ -62,7 +62,8 @@ not establish identical wiring.
 - [Offline validation and remaining hardware tests](docs/VALIDATION.md)
 - [Migration preflight and unattended-installation boundary](docs/MIGRATION-PREFLIGHT.md)
 - [Configuration button and reset behavior](docs/BUTTON-BEHAVIOR.md)
-- [Hardware, Ethernet reset evidence and remaining recovery work](docs/HARDWARE-AND-RECOVERY.md)
+- [Return to stock / disaster recovery over the network](docs/HARDWARE-AND-RECOVERY.md#return-to-stock--disaster-recovery)
+- [Hardware and Ethernet reset evidence](docs/HARDWARE-AND-RECOVERY.md)
 - [Installed-image Ethernet evidence](tools/installed-network-evidence.json)
 - [Native Nordic delivery and address-type handling](docs/NATIVE-NORDIC.md)
 
