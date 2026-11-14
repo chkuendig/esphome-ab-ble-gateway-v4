@@ -14,6 +14,8 @@ for key, expected in {
     "BT_GATTS_ENABLE": False,
     "COMPILER_OPTIMIZATION_ASSERTIONS_SILENT": True,
     "LIBC_NEWLIB_NANO_FORMAT": False,
+    "VFS_SUPPORT_IO": False,
+    "ESP_ERR_TO_NAME_LOOKUP": False,
 }.items():
     if bool(config.get(key)) != expected:
         raise SystemExit(f"Unexpected build setting: {key}")

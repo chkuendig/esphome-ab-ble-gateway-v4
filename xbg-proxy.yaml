@@ -22,6 +22,10 @@ esp32:
       CONFIG_BT_GATTS_ENABLE: "n"
       # Keep ESPHome proxy logs; omit the underlying stack's debug strings.
       CONFIG_BT_STACK_NO_LOG: "y"
+      # No filesystem/stdio devices: UART uses the driver directly, sockets
+      # remain available. Keep numeric IDF errors without their lookup table.
+      CONFIG_VFS_SUPPORT_IO: "n"
+      CONFIG_ESP_ERR_TO_NAME_LOOKUP: "n"
       CONFIG_ESP_WIFI_ENTERPRISE_SUPPORT: "n"
       CONFIG_MBEDTLS_PEM_WRITE_C: "n"
       CONFIG_MBEDTLS_X509_CRL_PARSE_C: "n"
