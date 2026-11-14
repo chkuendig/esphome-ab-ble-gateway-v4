@@ -64,15 +64,33 @@ RX chunks may split a response or combine several lines; retain the raw bytes.
 
 ## Validation status
 
-Configuration validation and the first hosted build passed. The first image
-was 1,039,312 bytes (9,264 bytes spare). Raw AT/version queries worked live;
-the first unsubscribe test exposed the restart-timing issue described above.
-The corrected build and complete recovery checks are pending.
+Configuration validation and the corrected hosted build passed, including
+22 Python tests and the C/C++ checks. The diagnostic image is 1,039,312 bytes
+(9,264 bytes spare). [Build 43589342639](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/actions/runs/43589342639),
+source `62353b7`, SHA256:
+`30ea31f6a366e9d97a0649feadc5e3db509d9192fec58b57e4ecd501d23ee2a0`.
+
+Hardware checks on 2026-11-14 passed after encrypted app-only OTA:
+
+- `AT` and `AT+VERS?` replied; version remained `1.1.3`.
+- Normal unsubscribe and an unexpected client disconnect both restored Nordic
+  advertisements without rebooting either chip.
+- A connected but abandoned serial client lost ownership at the 60-second
+  deadline; its next configuration request was rejected, and Nordic
+  advertisements resumed.
+- During a 50-second Nordic pause, the ESP32 delivered 20 tomato broadcasts;
+  no Nordic-only advertisements appeared during that interval. The encrypted
+  API remained responsive throughout.
+
+The first diagnostic image exposed the 100 ms restart-timing issue described
+above. The corrected image passed all three recovery cases. These checks did
+not flash Nordic, test its DFU/SWD interfaces, change sensor settings or request
+another battery connection. Arbitrary commands that alter Nordic settings are
+outside this recovery guarantee.
 
 Lease tests cover no subscriber, disconnect,
 a connected abandoned client, attempted renewal and clock wraparound. Client
-tests cover pacing, rejected ownership and cleanup on failure. Build size and
-live trial results must be recorded before claiming hardware validation.
+tests cover pacing, rejected ownership and cleanup on failure.
 
 Earlier diagnostic firmware (not this serial proxy) observed Nordic 1.1.3,
 working AT/status/version replies, ERROR for the tested connection-related
