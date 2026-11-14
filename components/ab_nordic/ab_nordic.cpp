@@ -5,6 +5,13 @@
 
 namespace esphome::ab_nordic {
 static const char *const TAG = "ab_nordic";
+#ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
+// SCAN0 restarts Nordic's scanner. A 100 ms restart sequence loses the later
+// commands; the stock firmware waits ~510 ms. Live UART A/B verified 600 ms.
+static constexpr uint32_t SCAN_COMMAND_DELAY_MS = 600;
+#else
+static constexpr uint32_t SCAN_COMMAND_DELAY_MS = 100;
+#endif
 static AbNordic *gateway;
 void AbNordic::setup() {
   gateway = this;
@@ -23,7 +30,7 @@ void AbNordic::loop() {
   if (this->diagnostics_loop_(now)) return;
 #endif
   if (this->start_stage_ < 2) {
-    if (now - this->start_time_ >= 100) {
+    if (now - this->start_time_ >= SCAN_COMMAND_DELAY_MS) {
       this->write_str(this->start_stage_ == 0 ? "AT+ACT0\r\n" : "AT+SCAN2\r\n");
       this->start_time_ = now;
       this->start_stage_++;

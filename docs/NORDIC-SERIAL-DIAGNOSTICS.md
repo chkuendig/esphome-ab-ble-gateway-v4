@@ -22,7 +22,10 @@ permits only one client. ESP32 BLE scanning and GATT remain independent.
 Unsubscribe/disconnect after an observed subscription, or expiry even if the
 client never subscribed, releases diagnostics. The firmware evicts a remaining
 subscriber on expiry, restores the ESP UART to 115200 8N1, clears the partial
-parser/batch and restarts SCAN0 → ACT0 → SCAN2. No Nordic reset pin is used.
+parser/batch and restarts SCAN0 → ACT0 → SCAN2, with 600 ms between commands.
+No Nordic reset pin is used. Live UART comparison found that a 100 ms sequence
+left the scanner stopped, while 600 ms restored advertisements; stock's traced
+sequence uses approximately 510 ms. The main loop remains nonblocking.
 An undetected connection loss is bounded by the same lease. A subscribe and
 unsubscribe within one loop pass still has the pre-armed deadline.
 
@@ -61,7 +64,12 @@ RX chunks may split a response or combine several lines; retain the raw bytes.
 
 ## Validation status
 
-Configuration validation passed. Lease tests cover no subscriber, disconnect,
+Configuration validation and the first hosted build passed. The first image
+was 1,039,312 bytes (9,264 bytes spare). Raw AT/version queries worked live;
+the first unsubscribe test exposed the restart-timing issue described above.
+The corrected build and complete recovery checks are pending.
+
+Lease tests cover no subscriber, disconnect,
 a connected abandoned client, attempted renewal and clock wraparound. Client
 tests cover pacing, rejected ownership and cleanup on failure. Build size and
 live trial results must be recorded before claiming hardware validation.
