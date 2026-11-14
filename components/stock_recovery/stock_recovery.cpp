@@ -24,6 +24,10 @@ static constexpr uint32_t TRIAL_MS = 900000;
 #ifdef AB_NORDIC_SERIAL_DIAGNOSTICS
 static constexpr uint32_t ACCEPTANCE_KEY = 0x58424702;
 static constexpr const char *ACCEPTANCE_NVS_KEY = "1480738562";
+#elif defined(AB_NORDIC_SERIAL_SPLIT)
+// Separate key: accepting another profile must not skip this profile's trial.
+static constexpr uint32_t ACCEPTANCE_KEY = 0x58424703;
+static constexpr const char *ACCEPTANCE_NVS_KEY = "1480738563";
 #else
 static constexpr uint32_t ACCEPTANCE_KEY = 0x58424701;
 static constexpr const char *ACCEPTANCE_NVS_KEY = "1480738561";

@@ -2,7 +2,7 @@
 set -euo pipefail
 proxy_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 build_config=${AB_BUILD_CONFIG:-xbg-proxy.yaml}
-case "$build_config" in xbg-proxy.yaml|xbg-proxy-diagnostic.yaml) ;; *) exit 1 ;; esac
+case "$build_config" in xbg-proxy.yaml|xbg-proxy-diagnostic.yaml|xbg-proxy-split.yaml) ;; *) exit 1 ;; esac
 extra_mounts=()
 # Optional local cache reuse when ignored private directories are symlinks.
 if [[ -n "${XBG_SHARED_WORKSPACE:-}" ]]; then

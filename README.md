@@ -72,6 +72,7 @@ not establish identical wiring.
 - [Installed-image Ethernet evidence](tools/installed-network-evidence.json)
 - [Native Nordic delivery and address-type handling](docs/NATIVE-NORDIC.md)
 - [Optional Nordic UART diagnostic profile](docs/NORDIC-SERIAL-DIAGNOSTICS.md)
+- [Nordic as a separate HA scanner (split profile + `ab_nordic` integration)](docs/NORDIC-SPLIT-SCANNER.md)
 
 ## Build and checks
 

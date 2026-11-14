@@ -34,6 +34,7 @@ RSSI/dB comparison across devices has not been completed.
 | --- | --- | --- |
 | Normal proxy | [v0.1.0-preview.1](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/releases/tag/v0.1.0-preview.1), binary built from `5ae3c82` | 1,035,696 bytes; 12,880 bytes spare in an original 1 MiB slot. Published app-only asset. |
 | Optional serial diagnostics | `xbg-proxy-diagnostic.yaml`, tested source `62353b7`, [build 43589342639](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/actions/runs/43589342639) | 1,039,312 bytes; 9,264 bytes spare. Installed and accepted on the test unit. Source merged in [PR #1](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/pull/1); no diagnostic release asset published. |
+| Split Nordic scanner | `xbg-proxy-split.yaml` + `custom_components/ab_nordic`, branch `feature/nordic-split-scanner` | In development. See [split scanner](NORDIC-SPLIT-SCANNER.md). |
 
 The release asset was not silently replaced by the diagnostic build. Exact
 hashes and validation are in [base validation](VALIDATION.md#corrected-candidate)
