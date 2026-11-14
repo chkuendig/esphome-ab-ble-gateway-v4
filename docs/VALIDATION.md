@@ -1,5 +1,14 @@
 # Validation — 2026-11-14
 
+## Corrected candidate
+
+Source `5ae3c82`, [hosted build](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/actions/runs/43540526377).
+The unknown address-type marker is now 127 with a compile-time one-byte limit.
+App size remains **1,035,696 bytes**; SHA256
+`bf8dc77cab2cae8eae64767c464b286ffb64c27eda6db7dd8f39f61cf1f6b9fd`.
+Offline checks, original-layout preflight and known-private-value audit passed.
+Installed HA decoder tests also passed for marker 127. Hardware trial pending.
+
 ## Compact native build
 
 Source commit `c2826f1`, pinned ESPHome 2026.10.2 / IDF 5.5.6.
