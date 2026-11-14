@@ -16,7 +16,29 @@ static bool read_string(nvs_handle_t h, const char *key, char *out, size_t capac
   }
   return true;
 }
+static bool restore_migration_feed() {
+  // Only undo our installer's temporary feed. Other custom vendor feeds stay
+  // untouched, and this never changes credentials or the Nordic firmware.
+  nvs_handle_t handle;
+  if (nvs_open("storage", NVS_READONLY, &handle) != ESP_OK) return true;
+  char url[192]{};
+  const bool ours = read_string(handle, "ota-url", url, sizeof(url)) &&
+                    std::strstr(url, "/esphome-migration/") != nullptr;
+  nvs_close(handle);
+  if (!ours) return true;
+  if (nvs_open("storage", NVS_READWRITE, &handle) != ESP_OK) return false;
+  static constexpr const char *FEED = "http://ota.bconimg.com/gw4";
+  const bool restored = nvs_set_str(handle, "ota-url", FEED) == ESP_OK && nvs_commit(handle) == ESP_OK &&
+                        read_string(handle, "ota-url", url, sizeof(url)) && !std::strcmp(url, FEED);
+  nvs_close(handle);
+  return restored;
+}
 void AbSettings::setup() {
+  if (!restore_migration_feed()) {
+    ESP_LOGE(TAG, "Could not restore the stock update feed");
+    mark_failed();
+    return;
+  }
   // A deliberate settings reset must not silently resurrect stock credentials.
   nvs_handle_t state;
   uint8_t reset = 0;

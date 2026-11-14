@@ -34,7 +34,7 @@ esp32:
 # Keep the inspected stock geometry. First boot preserves verified current
 # stock in factory before starting ESPHome. Only app-only OTA is applicable.
 logger:
-  level: WARN
+  level: ERROR
   baud_rate: 115200
 
 # Local provisioning through UART0 (separate from Nordic RX32/TX33).
