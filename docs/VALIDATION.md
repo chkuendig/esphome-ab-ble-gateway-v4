@@ -30,19 +30,34 @@ untouched. The acceptance command completed with an encrypted API response
 and no recovery errors. Acceptance metadata has not been independently read
 back. Upstream Xiaomi BLE polling remains once per day.
 
-**MyCO2 remains unavailable:** two native captures contained no packets from
+**Initial MyCO2 outage:** two native captures contained no packets from
 this device. A 90-second ESP32 active-scanning test also received none. A
 controlled return to exact stock 1.5.13 with unchanged visible settings then
 received 167 MQTT messages in 180 seconds, including 151 plant and 167 kettle
 frames, but zero MyCO2 frames (both raw-wire MAC search and decoded records).
-Stock therefore does not restore MyCO2 either; a migration regression has not
-been established. The sensor/reception issue remains unresolved, and MyCO2
-compatibility is not claimed as verified. The gateway was returned to the same
+Stock did not restore MyCO2 during that comparison; a migration regression
+was not established. The gateway was returned to the same
 verified ESPHome image after this comparison; its encrypted API reconnected
 with the existing key and remained responsive after 65 seconds. This also
 exercised the native stock-return button without physical intervention. HA
 reconnected automatically afterward and confirmed fresh plant readings and
 kettle advertisements through the proxy, without an HA restart or new poll.
+
+**MyCO2 reception subsequently confirmed:** following the owner's reported
+sensor power cycle, HA received 561 ppm with Sensirion manufacturer data through
+the native gateway while its requested scanning mode was still Passive. After
+the owner later switched the ESP32 scanner to Auto, HA confirmed another fresh
+reading of 652 ppm and a gateway-sourced manufacturer-data advertisement.
+The initial outage's cause is unproven; recovery cannot be attributed to Auto
+because gateway reception was already observed before that change. Both radios
+share one scanner identity, so these observations do not identify which radio
+received MyCO2. Long-term reception stability remains to be observed.
+
+The native scanner's saved HA mode is now Auto; fresh plant/kettle traffic was
+verified after the options reload. The Nordic receiver remains passive. The
+unused MQTT broker/exporter were subsequently retired by the HA administrator;
+broker config/data, integration code and disabled HA entries were retained for
+on-demand stock recovery. No MQTT service is required by the deployed proxy.
 
 Physical reset gestures,
 SmartConfig/Improv, LED feedback and Ethernet remain outside these tests.

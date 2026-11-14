@@ -72,7 +72,9 @@ radio delivery or a successful GATT connection.
 Native plant/kettle delivery, ESP32 GATT, encrypted OTA/reconnection and timed
 stock recovery have now passed hardware trials; HA independently read the plant
 battery through the proxy. The old `ab_ble_gateway` entry is disabled and the
-broker remains untouched. MyCO2 reception is unresolved under both stock and
-ESPHome; the stock comparison did not establish a migration regression.
+unused broker was later retired with recovery configuration retained. MyCO2
+manufacturer data and CO₂ readings have now been confirmed through the native
+gateway following a sensor power cycle, both before and after selecting Auto
+for ESP32 scanning. The physical receiving radio is not identified.
 Full-queue backpressure and every physical recovery path have not been exercised
 on hardware. See [validation](VALIDATION.md) for the exact boundaries.

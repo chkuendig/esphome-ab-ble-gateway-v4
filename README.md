@@ -8,8 +8,8 @@ GATT connections alongside the existing Nordic advertising receiver.
 for the app-only image and its exact validation limits. The compact native build
 fits the inspected device's original 1 MiB OTA slots. Saved-network import, encrypted API/OTA, native Bluetooth delivery, GATT and
 timed stock return have passed hardware trials. Home Assistant now reads the
-plant battery through the proxy. MyCO2 is currently unavailable under both
-stock and ESPHome; its reception remains unresolved. Use only an
+plant battery through the proxy. MyCO2 CO₂ readings have also been confirmed
+through the native gateway after the sensor was power-cycled. Use only an
 app-only image through the verified migration procedure. Never upload a merged
 factory image to the vendor OTA endpoint.
 

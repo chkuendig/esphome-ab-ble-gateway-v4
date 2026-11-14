@@ -67,7 +67,10 @@ preference records has been established.
 
 The inspected gateway completed onboarding, encrypted OTA and HA battery
 polling; its acceptance command was sent and the old gateway integration was
-disabled. MyCO2 reception is unresolved under both stock and ESPHome. The
+disabled. MyCO2 reception was subsequently confirmed following a sensor power
+cycle. The unused broker was retired with config/data and disabled HA entries
+retained; stock BLE delivery can be recovered by restoring the broker and
+re-enabling HA MQTT and the old gateway integration. The
 [offline preflight](MIGRATION-PREFLIGHT.md) validates the backups, app and
 original geometry, but is not a hardware test for another device.
 
