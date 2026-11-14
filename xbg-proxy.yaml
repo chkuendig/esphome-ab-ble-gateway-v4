@@ -10,7 +10,7 @@ esp32:
   board: esp32dev
   variant: esp32
   flash_size: 4MB
-  partitions: layout-candidates/stock-and-dual-proxy.csv
+  partitions: layout-candidates/original-stock.csv
   framework:
     type: esp-idf
     # Native encrypted API/OTA only; no MQTT or HTTP/TLS client transport.
@@ -31,10 +31,10 @@ esp32:
       CONFIG_MBEDTLS_X509_CRL_PARSE_C: "n"
       CONFIG_MBEDTLS_X509_CSR_PARSE_C: "n"
 
-# Candidate layout is NOT installed. A verified one-time migration must copy
-# current stock to factory first. Never vendor-OTA a merged/factory image.
+# Keep the inspected stock geometry. First boot preserves verified current
+# stock in factory before starting ESPHome. Only app-only OTA is applicable.
 logger:
-  level: INFO
+  level: WARN
   baud_rate: 115200
 
 # Local provisioning through UART0 (separate from Nordic RX32/TX33).

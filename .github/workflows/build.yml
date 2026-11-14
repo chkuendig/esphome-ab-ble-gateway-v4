@@ -2,6 +2,11 @@ name: Compile and measure
 
 on:
   workflow_dispatch:
+    inputs:
+      artifact_recipient:
+        description: Optional public X.509 certificate (PEM) for encrypted build evidence
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -26,6 +31,8 @@ jobs:
           gcc -std=c11 -Wall -Wextra -Werror -c components/ab_nordic/protocol.c -o /tmp/protocol.o
           g++ -std=c++17 -Wall -Wextra -Werror tests/native_nordic.cpp /tmp/protocol.o -o /tmp/nordic
           /tmp/nordic
+          g++ -std=c++17 -Wall -Wextra -Werror tests/stock_copy.cpp -o /tmp/stock-copy
+          /tmp/stock-copy
       - name: Compile public source
         run: ./build.sh > build.log 2>&1
       - name: Build log
@@ -34,4 +41,21 @@ jobs:
       - name: Report image integrity and size
         run: |
           python3 tools/report_build.py | tee -a "$GITHUB_STEP_SUMMARY"
-      # Intentionally no firmware, settings or cache uploads. Measurements only.
+      - name: Seal build evidence for private validation
+        if: inputs.artifact_recipient != ''
+        env:
+          BUILD_RECIPIENT: ${{ inputs.artifact_recipient }}
+        run: |
+          printf '%s\n' "$BUILD_RECIPIENT" > /tmp/recipient.pem
+          tar -czf /tmp/build-evidence.tar.gz -C private/data/private/build/build \
+            firmware.ota.bin firmware.elf config/sdkconfig.json
+          openssl cms -encrypt -binary -aes-256-cbc -in /tmp/build-evidence.tar.gz \
+            -outform DER -out sealed-build.cms /tmp/recipient.pem
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: inputs.artifact_recipient != ''
+        with:
+          name: sealed-build
+          path: sealed-build.cms
+          retention-days: 1
+          if-no-files-found: error
+      # No plaintext firmware, settings, private key or cache uploads.

@@ -1,4 +1,5 @@
 #include "stock_recovery.h"
+#include "copy.h"
 #include "esphome/core/log.h"
 #include "esp_ota_ops.h"
 #include "esp_system.h"
@@ -25,6 +26,35 @@ static constexpr uint32_t TRIAL_MS = 900000;
 static const esp_partition_t *early_stock;
 static uint32_t early_start;
 static bool early_guard_active;
+static constexpr size_t STOCK_SIZE = 944400;
+// The verified image's appended SHA256 (excludes the appended hash itself).
+static constexpr uint8_t STOCK_DIGEST[32] = {
+  0xd2, 0x3a, 0x91, 0xdc, 0x28, 0x19, 0x1a, 0x12, 0x17, 0xc0, 0x33, 0x3e, 0x45, 0x03, 0x03, 0xfc,
+  0x26, 0xa5, 0x67, 0x75, 0x5b, 0x51, 0xff, 0x6f, 0x0d, 0xb6, 0xc6, 0x67, 0x5d, 0x1b, 0x76, 0x4a
+};
+static bool verified_stock(const esp_partition_t *partition) {
+  esp_app_desc_t desc{};
+  uint8_t digest[32];
+  return partition && partition->size >= STOCK_SIZE &&
+    esp_ota_get_partition_description(partition, &desc) == ESP_OK &&
+    !std::strcmp(desc.project_name, "xin-ble-gateway") &&
+    !std::strcmp(desc.version, "v1.5.12-3-gdb55502-dirty") &&
+    esp_partition_get_sha256(partition, digest) == ESP_OK && !std::memcmp(digest, STOCK_DIGEST, sizeof(digest));
+}
+struct PartitionCopy {
+  const esp_partition_t *source, *factory;
+  bool verify_source() { return verified_stock(source); }
+  bool select_source() { return esp_ota_set_boot_partition(source) == ESP_OK; }
+  bool erase_factory() { return esp_partition_erase_range(factory, 0, factory->size) == ESP_OK; }
+  bool read_source(size_t offset, uint8_t *buffer, size_t count) {
+    return esp_partition_read(source, offset, buffer, count) == ESP_OK;
+  }
+  bool write_factory(size_t offset, const uint8_t *buffer, size_t count) {
+    return esp_partition_write(factory, offset, buffer, count) == ESP_OK;
+  }
+  bool verify_factory() { return verified_stock(factory); }
+  bool select_factory() { return esp_ota_set_boot_partition(factory) == ESP_OK; }
+};
 
 static void arm_guard(uint32_t ms) {
   rtc_wdt_protect_off();
@@ -45,13 +75,18 @@ static void disable_guard() {
   rtc_wdt_protect_on();
 }
 bool prepare_early_recovery() {
-  early_stock = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, nullptr);
-  esp_app_desc_t desc{};
-  if (!early_stock || early_stock->address != 0x10000 ||
-      early_stock == esp_ota_get_running_partition() ||
-      esp_ota_get_partition_description(early_stock, &desc) != ESP_OK ||
-      std::strcmp(desc.project_name, "xin-ble-gateway") ||
-      std::strcmp(desc.version, "v1.5.12-3-gdb55502-dirty")) {
+  const auto *factory = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, nullptr);
+  const auto *running = esp_ota_get_running_partition();
+  if (!factory || !running || running->address == factory->address || factory->address != 0x10000) return false;
+  early_stock = verified_stock(factory) ? factory : nullptr;
+  // On the original layout, current stock is still in the other OTA slot.
+  for (unsigned subtype = ESP_PARTITION_SUBTYPE_APP_OTA_0;
+       !early_stock && subtype <= ESP_PARTITION_SUBTYPE_APP_OTA_1; ++subtype) {
+    const auto *candidate = esp_partition_find_first(ESP_PARTITION_TYPE_APP,
+        static_cast<esp_partition_subtype_t>(subtype), nullptr);
+    if (candidate && candidate->address != running->address && verified_stock(candidate)) early_stock = candidate;
+  }
+  if (!early_stock) {
     esp_rom_printf("AB_RECOVERY: expected stock image missing; startup stopped\n");
     early_stock = nullptr;
     return false;
@@ -65,6 +100,21 @@ bool prepare_early_recovery() {
   arm_guard(TRIAL_MS + 10000);
   early_guard_active = true;
   esp_rom_printf("AB_RECOVERY: stock selected; trial watchdog armed before ESPHome\n");
+  if (early_stock != factory) {
+    // No partition-table, bootloader, NVS, running-app or Nordic writes.
+    // Static buffer avoids exhausting IDF's small app_main task stack.
+    static uint8_t buffer[4096];
+    PartitionCopy ops{early_stock, factory};
+    if (!copy_factory(ops, {running->address, running->size}, {early_stock->address, early_stock->size},
+                      {factory->address, factory->size}, STOCK_SIZE, buffer)) {
+      esp_rom_printf("AB_RECOVERY: factory preparation failed; returning to selected stock\n");
+      arm_guard(10000);
+      esp_restart();
+      return false;
+    }
+    early_stock = factory;
+    esp_rom_printf("AB_RECOVERY: verified current stock copied to factory; layout unchanged\n");
+  }
   return true;
 }
 void StockRecovery::setup() {
