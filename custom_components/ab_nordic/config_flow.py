@@ -8,7 +8,15 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntryState, ConfigFlow, ConfigFlowResult
 
-from .const import CONF_ESPHOME_ENTRY_ID, CONF_PORT_NAME, DEFAULT_PORT_NAME, DOMAIN, RADIO_NAME
+from .const import (
+    CONF_DEVICE,
+    CONF_ESPHOME_ENTRY_ID,
+    CONF_PORT_NAME,
+    DEFAULT_PORT_NAME,
+    DOMAIN,
+    RADIO_NAME,
+)
+from .scanner import serial_proxy_url
 
 
 class NordicConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -41,7 +49,11 @@ class NordicConfigFlow(ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
                 title=f"{name} {RADIO_NAME}",
-                data={CONF_ESPHOME_ENTRY_ID: entry_id, CONF_PORT_NAME: DEFAULT_PORT_NAME},
+                data={
+                    CONF_ESPHOME_ENTRY_ID: entry_id,
+                    CONF_PORT_NAME: DEFAULT_PORT_NAME,
+                    CONF_DEVICE: serial_proxy_url(entry_id, DEFAULT_PORT_NAME),
+                },
             )
         return self.async_show_form(
             step_id="user",

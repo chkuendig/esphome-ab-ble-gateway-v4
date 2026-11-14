@@ -17,6 +17,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
+    CONF_DEVICE,
     CONF_ESPHOME_ENTRY_ID,
     CONF_PORT_NAME,
     DOMAIN,
@@ -79,7 +80,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bo
     )
     entry.async_on_unload(scanner.async_setup())
 
-    link = NordicLink(hass, serial_proxy_url(esphome_entry.entry_id, port_name), scanner)
+    url = serial_proxy_url(esphome_entry.entry_id, port_name)
+    if entry.data.get(CONF_DEVICE) != url:  # Entries created by 0.1.0/0.1.1
+        hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_DEVICE: url})
+    link = NordicLink(hass, url, scanner)
     entry.async_on_unload(link.stop)
     entry.async_create_background_task(hass, link.run(), f"{DOMAIN} stream {source}")
     entry.runtime_data = NordicRuntimeData(scanner, link)

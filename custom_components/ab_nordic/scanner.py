@@ -6,10 +6,10 @@ import asyncio
 import logging
 import time
 from typing import Any
-from urllib.parse import quote
 
 from homeassistant.components.bluetooth import MONOTONIC_TIME, BaseHaRemoteScanner
 from homeassistant.core import HomeAssistant
+from yarl import URL
 
 from .const import BAUD_RATE, RECONNECT_MAX_SECONDS, RECONNECT_MIN_SECONDS
 from .protocol import NordicAdvert, NordicParser
@@ -31,13 +31,20 @@ class NordicScanner(BaseHaRemoteScanner):
 
 
 def serial_proxy_url(esphome_entry_id: str, port_name: str) -> str:
-    """URL understood by Home Assistant's ESPHome serialx transport.
+    """Canonical URL of the port, as Home Assistant's ESPHome integration builds it.
 
-    It reuses the ESPHome integration's existing API connection, so this
+    The port reports no identity, so HA addresses it by name. It reuses the ESPHome integration's existing API connection, so this
     integration never opens a second client or touches the BLE proxy's single
     advertisement subscription.
     """
-    return f"esphome-hass://esphome/{esphome_entry_id}?port_name={quote(port_name)}"
+    return str(
+        URL.build(
+            scheme="esphome-hass",
+            host="esphome",
+            path=f"/{esphome_entry_id}",
+            query={"port_name": port_name},
+        )
+    )
 
 
 class _StreamProtocol(asyncio.Protocol):

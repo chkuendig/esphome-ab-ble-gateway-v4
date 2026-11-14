@@ -4,6 +4,9 @@ DOMAIN = "ab_nordic"
 
 CONF_ESPHOME_ENTRY_ID = "esphome_entry_id"
 CONF_PORT_NAME = "port_name"
+# Canonical serial port URL. Stored under "device" so Home Assistant's usb
+# integration attributes the ESPHome port to this entry ("in use").
+CONF_DEVICE = "device"
 
 # Must match the serial_proxy name in xbg-proxy-split.yaml (an internal
 # identifier; renaming it would need a firmware update). The diagnostic

@@ -56,7 +56,10 @@ The integration opens
 `esphome-hass://esphome/<esphome entry id>?port_name=Nordic%20scanner` with
 `serialx`, parses `OK+SCAN:` records (`protocol.py`, mirroring
 `components/ab_nordic/protocol.c`) and passes each one to a non-connectable
-`BaseHaRemoteScanner`. It reconnects with 5–60 s backoff after a gateway
+`BaseHaRemoteScanner`. The entry stores that URL as `device`, so HA's usb integration and the ESPHome
+device page show the port as in use by this integration. HA's "Set up" picker
+for serial ports lists only core integrations, so add this one from
+*Add integration* instead. It reconnects with 5–60 s backoff after a gateway
 reboot or ESPHome reload. Config-entry diagnostics report the stream counters
 (bytes, records, malformed, connects, last error).
 
