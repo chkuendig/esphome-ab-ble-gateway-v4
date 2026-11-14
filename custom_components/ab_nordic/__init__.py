@@ -52,8 +52,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bo
     scanner = NordicScanner(source, name, None, False)
 
     device_registry = dr.async_get(hass)
-    device = device_registry.async_get_device(
-        connections={(dr.CONNECTION_NETWORK_MAC, dr.format_mac(device_info.mac_address))}
+    # Attach the adapter to the gateway device owned by its ESPHome entry.
+    device = device_registry.async_get_device_by_connection(
+        (dr.CONNECTION_NETWORK_MAC, dr.format_mac(device_info.mac_address)), esphome_entry.entry_id
     )
     entry.async_on_unload(
         async_register_scanner(

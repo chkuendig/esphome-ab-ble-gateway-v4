@@ -64,4 +64,21 @@ integration.
   binary length vs embedded CR/LF, command replies between records, mid-record
   starts, corrupt length/type/terminator, random chunking and bounded noise.
   `tests/split_owner.cpp` covers ownership/release transitions.
-- Compile and hardware validation are recorded separately once performed.
+- Compile: [build 43609666943](https://github.com/chkuendig/esphome-ab-ble-gateway-v4/actions/runs/43609666943),
+  source `b72ba9b`, 1,038,800 bytes (9,776 bytes spare in the original 1 MiB
+  slot), SHA256 `b7a99f514ce9723b44db09d09c42270e74d31f4ff9095eba37ee1444540ec3c9`.
+  The offline migration preflight passed against the unit's two identical backups.
+- Hardware, 2026-11-14 on the test unit (Home Assistant 2026.11.1):
+  - Encrypted app-only OTA, then accepted within the trial. Still running the
+    split build after the 15-minute window; no stock return.
+  - A direct, read-only 20 s subscription before HA setup received 1,558
+    records from 31 devices, 0 malformed. Releasing it restored dropping
+    without a reboot.
+  - With `ab_nordic` set up, HA lists three adapters: the host adapter, the
+    connectable ESPHome proxy and the non-connectable Nordic scanner. In one
+    snapshot the Nordic heard 43 devices and the ESP32 51; 12 were heard only by
+    the Nordic and are no longer offered as connectable through the ESP32.
+  - Reloading the HA entry released and re-claimed the port without errors.
+    After 14 minutes the stream had 65,428 records, 0 malformed, one connect.
+  - Not yet exercised: reconnection after a gateway reboot or Wi-Fi loss,
+    long-term stability, and HA restarts with the gateway offline.
