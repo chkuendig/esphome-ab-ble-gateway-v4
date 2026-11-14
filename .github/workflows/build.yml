@@ -1,0 +1,37 @@
+name: Compile and measure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-measurement
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Offline checks
+        run: |
+          python3 -m unittest discover -s tests -v
+          g++ -std=c++17 -Wall -Wextra -Werror tests/gesture.cpp -o /tmp/gesture
+          /tmp/gesture
+          gcc -std=c11 -Wall -Wextra -Werror -c components/ab_nordic/protocol.c -o /tmp/protocol.o
+          g++ -std=c++17 -Wall -Wextra -Werror tests/native_nordic.cpp /tmp/protocol.o -o /tmp/nordic
+          /tmp/nordic
+      - name: Compile public source
+        run: ./build.sh > build.log 2>&1
+      - name: Build log
+        if: always()
+        run: test ! -f build.log || tail -80 build.log
+      - name: Report image integrity and size
+        run: |
+          python3 tools/report_build.py | tee -a "$GITHUB_STEP_SUMMARY"
+      # Intentionally no firmware, settings or cache uploads. Measurements only.

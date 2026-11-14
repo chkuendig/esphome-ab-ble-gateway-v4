@@ -15,6 +15,13 @@ esp32:
     type: esp-idf
     # Native encrypted API/OTA only; no MQTT or HTTP/TLS client transport.
     sdkconfig_options:
+      # Keep assertion checks, omit their per-site expression/file strings.
+      CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_SILENT: "y"
+      CONFIG_COMPILER_OPTIMIZATION_CHECKS_SILENT: "y"
+      # A proxy is a GATT client; no local GATT services are exposed.
+      CONFIG_BT_GATTS_ENABLE: "n"
+      # Keep ESPHome proxy logs; omit the underlying stack's debug strings.
+      CONFIG_BT_STACK_NO_LOG: "y"
       CONFIG_ESP_WIFI_ENTERPRISE_SUPPORT: "n"
       CONFIG_MBEDTLS_PEM_WRITE_C: "n"
       CONFIG_MBEDTLS_X509_CRL_PARSE_C: "n"

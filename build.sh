@@ -16,7 +16,7 @@ for runner in ${AB_CHECK_RUNNERS:-}; do
 done
 mkdir -p "$proxy_root/private/uv-cache" "$proxy_root/private/cache" \
   "$proxy_root/private/platformio" "$proxy_root/private/data"
-docker run --rm --name xbg-esphome-build --cpus 2 --memory 3g --user 1000:1000 \
+docker run --rm --name xbg-esphome-build --cpus 2 --memory 3g --user "$(id -u):$(id -g)" \
   -e UV_CACHE_DIR=/config/private/uv-cache \
   -e XDG_CACHE_HOME=/config/private/cache \
   -e PLATFORMIO_CORE_DIR=/config/private/platformio \

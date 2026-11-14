@@ -59,6 +59,19 @@ class MigrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.assess(backup=bytes(damaged))
 
+    def test_original_layout_slot_boundary(self):
+        original = m.read_layout(ROOT / "layout-candidates/original-stock.csv")
+        self.assertEqual(original, m.EXPECTED)
+        exact = app(0x100000 - 80)
+        self.assertEqual(len(exact), 0x100000)
+        result = self.assess(candidate=exact, target=original)
+        self.assertTrue(result["fits_existing_ota_slots"])
+        self.assertFalse(result["partition_table_change_required"])
+        self.assertFalse(result["remote_install_ready"])
+        self.assertFalse(any("partition-table" in item for item in result["blockers"]))
+        with self.assertRaises(ValueError):
+            self.assess(candidate=app(0x100000 - 64), target=original)
+
     def test_interrupted_table_write_has_no_valid_table(self):
         expected = table()
         # Model sector erasure and partial reprogramming through its MD5 record.
