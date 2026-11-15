@@ -1,9 +1,9 @@
 """April Brother BLE Gateway V4: the nRF52832 radio as its own Bluetooth scanner.
 
-With the xbg-proxy-split firmware, the gateway's ESP32 is the normal,
-connectable ESPHome Bluetooth proxy, and the nRF52832's passive scan stream is
-exposed raw over the encrypted ESPHome serial proxy. This integration reads it
-and registers a separate, non-connectable Home Assistant scanner.
+With the ab-ble-gateway-v4 firmware, the gateway's ESP32 is the normal,
+connectable ESPHome Bluetooth proxy, and the nRF52832's UART is exposed raw over
+the encrypted ESPHome serial proxy. This integration starts the nRF52832's
+scanner, reads its stream and registers a separate, non-connectable scanner.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bo
     port_name: str = entry.data[CONF_PORT_NAME]
     if not any(proxy.name == port_name for proxy in device_info.serial_proxies):
         raise ConfigEntryNotReady(
-            f"The gateway firmware has no serial proxy named {port_name!r} (split profile not installed)"
+            f"The gateway firmware has no serial proxy named {port_name!r} (ab-ble-gateway-v4 firmware not installed)"
         )
 
     # The ESPHome scanner uses the Bluetooth MAC; the nRF52832 scanner uses the
@@ -91,7 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bo
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: NordicConfigEntry) -> bool:
-    """Unload; the gateway firmware drops nRF52832 adverts while unsubscribed."""
+    """Unload; nRF52832 data is not forwarded while nothing is subscribed."""
     return True
 
 

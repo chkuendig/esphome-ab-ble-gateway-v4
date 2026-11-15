@@ -1,4 +1,4 @@
-"""Config flow: pick an ESPHome gateway that runs the split firmware profile."""
+"""Config flow: pick an ESPHome gateway that runs the ab-ble-gateway-v4 firmware."""
 
 from __future__ import annotations
 

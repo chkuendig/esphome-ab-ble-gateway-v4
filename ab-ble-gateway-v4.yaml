@@ -1,0 +1,221 @@
+# ESPHome for the April Brother AB BLE Gateway V4.
+#
+# ESP32: Wi-Fi + Ethernet, connectable Bluetooth proxy, configuration button,
+# status LED. nRF52832: its UART is exposed raw through serial_proxy; the
+# ab_nordic Home Assistant integration turns it into a second BLE scanner.
+#
+# The image is app-only and must fit the stock 1 MiB OTA slots, so it can be
+# installed from the stock firmware's updater. No credentials are compiled in:
+# Wi-Fi is imported from stock (or provisioned over Improv serial) and the API
+# key is provisioned by Home Assistant.
+
+esphome:
+  name: ab-ble-gateway-v4
+  name_add_mac_suffix: true
+  friendly_name: AB BLE Gateway V4
+  min_version: 2026.10.2
+  project:
+    name: chkuendig.ab-ble-gateway-v4
+    version: "1.0.0"
+  on_boot:
+    # Reset the Ethernet PHY the way the stock firmware does, before the
+    # Ethernet driver starts: GPIO13 disabled ~110 ms, low ~20 ms, then high.
+    - priority: 800
+      then:
+        - lambda: |-
+            gpio_reset_pin(GPIO_NUM_13);
+            gpio_set_direction(GPIO_NUM_13, GPIO_MODE_DISABLE);
+            delay(110);
+            gpio_set_direction(GPIO_NUM_13, GPIO_MODE_OUTPUT);
+            gpio_set_level(GPIO_NUM_13, 0);
+            delay(20);
+            gpio_set_level(GPIO_NUM_13, 1);
+    # Wi-Fi and Ethernet are used one at a time, like stock: ESP-IDF warns that
+    # Wi-Fi is unstable while the ESP32 outputs the RMII clock (GPIO17).
+    # Automatic = Ethernet only when no Wi-Fi network is saved.
+    - priority: 200
+      then:
+        - if:
+            condition:
+              lambda: |-
+                const auto mode = id(network_mode).active_index().value_or(0);
+                return mode == 2 || (mode == 0 && !wifi::global_wifi_component->has_sta());
+            then:
+              - wifi.disable:
+              - ethernet.enable:
+              - lambda: id(network_ready) = true;
+              # No link (no cable?) but a saved Wi-Fi network: use Wi-Fi
+              # until the next restart rather than staying unreachable.
+              - delay: 2min
+              - if:
+                  condition:
+                    and:
+                      - not:
+                          ethernet.connected:
+                      - lambda: return wifi::global_wifi_component->has_sta();
+                  then:
+                    - ethernet.disable:
+                    - wifi.enable:
+        - lambda: id(network_ready) = true;
+
+esp32:
+  board: esp32dev
+  variant: esp32
+  flash_size: 4MB
+  # Stock layout: factory + two 1 MiB OTA slots. Never change it over the air.
+  partitions: partitions.csv
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      # Size: keep assertion checks but drop their strings, no GATT server,
+      # no Bluetooth stack logs, no stdio VFS, no error-name table.
+      CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_SILENT: "y"
+      CONFIG_COMPILER_OPTIMIZATION_CHECKS_SILENT: "y"
+      CONFIG_BT_GATTS_ENABLE: "n"
+      CONFIG_BT_STACK_NO_LOG: "y"
+      CONFIG_VFS_SUPPORT_IO: "n"
+      CONFIG_ESP_ERR_TO_NAME_LOOKUP: "n"
+      CONFIG_ESP_WIFI_ENTERPRISE_SUPPORT: "n"
+      CONFIG_MBEDTLS_PEM_WRITE_C: "n"
+      CONFIG_MBEDTLS_X509_CRL_PARSE_C: "n"
+      CONFIG_MBEDTLS_X509_CSR_PARSE_C: "n"
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+logger:
+  level: ERROR
+  baud_rate: 115200
+
+# Encrypted API with a per-device key that Home Assistant provisions.
+api:
+  encryption:
+  reboot_timeout: 0s
+
+# OTA uses the same provisioned key; stock_recovery refuses plaintext uploads.
+ota:
+  - platform: esphome
+
+safe_mode:
+  num_attempts: 3
+  boot_is_good_after: 2min
+  reboot_timeout: 10min
+
+network:
+  priority:
+    - ethernet
+    - wifi
+
+ethernet:
+  type: LAN8720
+  phy_addr: 1
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk:
+    mode: CLK_OUT
+    pin: GPIO17
+  # Started at boot only in Ethernet mode (see on_boot).
+  enable_on_boot: false
+
+# Imported from stock or provisioned over Improv; no networks in YAML.
+wifi:
+  power_save_mode: none
+  reboot_timeout: 0s
+
+# Wi-Fi provisioning over UART0 (the ESP32 programming header).
+improv_serial:
+
+# Imports the stock firmware's saved Wi-Fi network on first boot.
+ab_settings:
+
+# Keeps stock as a fallback: factory copy, 15-minute trial, restore button.
+stock_recovery:
+  id: recovery
+
+esp32_ble_tracker:
+  scan_parameters:
+    active: false
+
+bluetooth_proxy:
+  active: true
+  connection_slots: 1
+
+# nRF52832 scanner (stock April Brother firmware), ESP32 RX32/TX33.
+uart:
+  id: nrf52832_uart
+  tx_pin: GPIO33
+  rx_pin: GPIO32
+  baud_rate: 115200
+  rx_buffer_size: 4096
+
+serial_proxy:
+  - id: nrf52832_serial
+    uart_id: nrf52832_uart
+    # The ab_nordic Home Assistant integration finds the port by this name.
+    name: Nordic scanner
+    port_type: TTL
+
+globals:
+  - id: network_ready
+    type: bool
+    initial_value: "false"
+
+select:
+  - platform: template
+    id: network_mode
+    name: Network
+    entity_category: config
+    options: [Automatic, Wi-Fi, Ethernet]
+    initial_option: Automatic
+    optimistic: true
+    restore_value: true
+    on_value:
+      # A changed network mode takes effect after a restart.
+      - if:
+          condition:
+            lambda: return id(network_ready);
+          then:
+            - delay: 1s
+            - lambda: App.safe_reboot();
+
+light:
+  - platform: status_led
+    name: Status LED
+    entity_category: config
+    pin:
+      number: GPIO5
+      inverted: true
+
+binary_sensor:
+  - platform: gpio
+    id: config_button
+    name: Configuration button
+    entity_category: diagnostic
+    pin:
+      number: GPIO12
+      inverted: true
+      mode: INPUT_PULLUP
+    filters:
+      - delayed_on_off: 5ms
+    on_multi_click:
+      # Like stock: hold for 10 s to reset the network settings.
+      - timing:
+          - ON for at least 10s
+        then:
+          - lambda: id(recovery).reset_settings();
+
+button:
+  - platform: template
+    name: Accept firmware
+    entity_category: config
+    on_press:
+      - lambda: id(recovery).accept();
+  - platform: template
+    name: Restore stock firmware
+    entity_category: config
+    on_press:
+      - lambda: id(recovery).restore_stock();
+  - platform: restart
+    name: Restart

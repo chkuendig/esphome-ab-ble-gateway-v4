@@ -11,7 +11,13 @@ from homeassistant.components.bluetooth import MONOTONIC_TIME, BaseHaRemoteScann
 from homeassistant.core import HomeAssistant
 from yarl import URL
 
-from .const import BAUD_RATE, RECONNECT_MAX_SECONDS, RECONNECT_MIN_SECONDS
+from .const import (
+    BAUD_RATE,
+    RECONNECT_MAX_SECONDS,
+    RECONNECT_MIN_SECONDS,
+    START_COMMAND_DELAY_SECONDS,
+    START_COMMANDS,
+)
 from .protocol import NordicAdvert, NordicParser
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,7 +67,7 @@ class _StreamProtocol(asyncio.Protocol):
 
 
 class NordicLink:
-    """Keeps a read-only serial proxy subscription alive and feeds the scanner."""
+    """Keeps the serial proxy subscription alive, starts scanning, feeds the scanner."""
 
     def __init__(self, hass: HomeAssistant, url: str, scanner: NordicScanner) -> None:
         self._hass = hass
@@ -105,6 +111,7 @@ class NordicLink:
                 self.last_error = None
                 delay = RECONNECT_MIN_SECONDS
                 _LOGGER.info("nRF52832 scanner stream connected (%s)", self._scanner.name)
+                await self._start_scanning(protocol)
                 exc = await protocol.closed
                 self.connected = False
                 self.connected_since = None
@@ -116,13 +123,25 @@ class NordicLink:
             await asyncio.sleep(delay)
             delay = min(delay * 2, RECONNECT_MAX_SECONDS)
 
+    async def _start_scanning(self, protocol: _StreamProtocol) -> None:
+        """(Re)start binary scanning; the nRF52832 may be stopped or in another mode.
+
+        The firmware's replies (OK+SCAN0 etc.) are skipped by the parser. The
+        commands need a pause in between or the later ones are lost.
+        """
+        for command in START_COMMANDS:
+            if protocol.closed.done() or self._transport is None:
+                return
+            self._transport.write(command)
+            await asyncio.sleep(START_COMMAND_DELAY_SECONDS)
+
     def _note_error(self, message: str) -> None:
         if message != self.last_error:
             _LOGGER.warning("nRF52832 scanner %s: %s; retrying", self._scanner.name, message)
         self.last_error = message
 
     def stop(self) -> None:
-        """Release the serial proxy; the firmware then drops nRF52832 adverts."""
+        """Release the serial proxy; nRF52832 data is then no longer forwarded."""
         self._stopping = True
         if self._transport is not None:
             self._transport.close()

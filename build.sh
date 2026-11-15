@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
+# Compile the firmware with the pinned ESPHome Docker image.
+# Output: build/<config name>.ota.bin (app-only image for OTA updates).
 set -euo pipefail
-proxy_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-build_config=${AB_BUILD_CONFIG:-xbg-proxy.yaml}
-case "$build_config" in xbg-proxy.yaml|xbg-proxy-diagnostic.yaml|xbg-proxy-split.yaml) ;; *) exit 1 ;; esac
-extra_mounts=()
-# Optional local cache reuse when ignored private directories are symlinks.
-if [[ -n "${XBG_SHARED_WORKSPACE:-}" ]]; then
-  [[ "$XBG_SHARED_WORKSPACE" == /* && -d "$XBG_SHARED_WORKSPACE" ]] || exit 1
-  extra_mounts=(-v "$XBG_SHARED_WORKSPACE:$XBG_SHARED_WORKSPACE")
-fi
-for runner in ${AB_CHECK_RUNNERS:-}; do
-  runner_processes=$(docker top "$runner" -eo pid,comm) || exit 1
-  if [[ "$runner_processes" == *Runner.Worker* ]]; then
-    printf 'CI is active in %s; build deferred.\n' "$runner" >&2
-    exit 1
-  fi
-done
-mkdir -p "$proxy_root/private/uv-cache" "$proxy_root/private/cache" \
-  "$proxy_root/private/platformio" "$proxy_root/private/data"
-docker run --rm --name xbg-esphome-build --cpus 2 --memory 3g --user "$(id -u):$(id -g)" \
-  -e UV_CACHE_DIR=/config/private/uv-cache \
-  -e XDG_CACHE_HOME=/config/private/cache \
-  -e PLATFORMIO_CORE_DIR=/config/private/platformio \
-  -e ESPHOME_DATA_DIR=/config/private/data \
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+config=${1:-ab-ble-gateway-v4.yaml}
+cache=${BUILD_CACHE_DIR:-$root/.cache}
+image=ghcr.io/esphome/esphome:2026.10.2@sha256:4a918585150e95e7675be84a347384ff308fde1bd32d0e4472666e1252cc0e8f
+slot_size=$((0x100000))
+
+mkdir -p "$cache"/{platformio,cache,uv-cache,data} "$root/build"
+cache=$(cd -- "$cache" && pwd)
+docker run --rm --user "$(id -u):$(id -g)" \
+  -e PLATFORMIO_CORE_DIR=/cache/platformio \
+  -e XDG_CACHE_HOME=/cache/cache \
+  -e UV_CACHE_DIR=/cache/uv-cache \
+  -e ESPHOME_DATA_DIR=/cache/data \
   -e PLATFORMIO_SETTING_ENABLE_TELEMETRY=no \
-  -v "$proxy_root:/config" "${extra_mounts[@]}" -w /config \
-  ghcr.io/esphome/esphome@sha256:4a918585150e95e7675be84a347384ff308fde1bd32d0e4472666e1252cc0e8f \
-  compile "$build_config"
+  -v "$root:/config" -v "$cache:/cache" -w /config \
+  "$image" compile "$config"
+
+name=$(basename "$config" .yaml)
+built=$cache/data/build/$name/build/firmware.ota.bin
+[[ -f "$built" ]] || { echo "$built not found" >&2; exit 1; }
+cp "$built" "$root/build/$name.ota.bin"
+size=$(stat -c %s "$root/build/$name.ota.bin")
+printf 'build/%s.ota.bin: %d bytes, %d bytes free in a 1 MiB OTA slot\n' \
+  "$name" "$size" $((slot_size - size))
+(( size <= slot_size )) || { echo "Image does not fit the stock OTA slot" >&2; exit 1; }

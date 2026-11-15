@@ -1,4 +1,4 @@
-"""Import credentials from this gateway, never from a public firmware image."""
+"""Import the stock firmware's saved Wi-Fi network into ESPHome on first boot."""
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.const import CONF_ID
@@ -11,8 +11,5 @@ CONFIG_SCHEMA = cv.Schema({
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
-    # Native OTA can load a runtime API key, but its encryption: YAML schema
-    # currently only accepts a compiled key. Require the same encrypted path.
-    cg.add_define("USE_OTA_ENCRYPTION_REQUIRED")
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)

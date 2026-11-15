@@ -1,28 +1,13 @@
-name: Compile and measure
+name: Build
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
-    inputs:
-      artifact_recipient:
-        description: Optional public X.509 certificate (PEM) for encrypted build evidence
-        required: false
-        type: string
-      profile:
-        description: Firmware profile to build
-        required: false
-        default: standard
-        type: choice
-        options:
-          - standard
-          - diagnostic
-          - split
 
 permissions:
   contents: read
-
-concurrency:
-  group: firmware-measurement
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -32,45 +17,15 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - name: Offline checks
+      - name: Tests
         run: |
           python3 -m unittest discover -s tests -v
-          g++ -std=c++17 -Wall -Wextra -Werror tests/gesture.cpp -o /tmp/gesture
-          /tmp/gesture
-          gcc -std=c11 -Wall -Wextra -Werror -c components/ab_nordic/protocol.c -o /tmp/protocol.o
-          g++ -std=c++17 -Wall -Wextra -Werror tests/native_nordic.cpp /tmp/protocol.o -o /tmp/nordic
-          /tmp/nordic
           g++ -std=c++17 -Wall -Wextra -Werror tests/stock_copy.cpp -o /tmp/stock-copy
           /tmp/stock-copy
-          g++ -std=c++17 -Wall -Wextra -Werror tests/diagnostic_lease.cpp -o /tmp/diagnostic-lease
-          /tmp/diagnostic-lease
-          g++ -std=c++17 -Wall -Wextra -Werror tests/split_owner.cpp -o /tmp/split-owner
-          /tmp/split-owner
-      - name: Compile public source
-        env:
-          AB_BUILD_CONFIG: ${{ inputs.profile == 'diagnostic' && 'xbg-proxy-diagnostic.yaml' || inputs.profile == 'split' && 'xbg-proxy-split.yaml' || 'xbg-proxy.yaml' }}
-        run: ./build.sh > build.log 2>&1
-      - name: Build log
-        if: always()
-        run: test ! -f build.log || tail -80 build.log
-      - name: Report image integrity and size
-        run: |
-          python3 tools/report_build.py | tee -a "$GITHUB_STEP_SUMMARY"
-      - name: Seal build evidence for private validation
-        if: inputs.artifact_recipient != ''
-        env:
-          BUILD_RECIPIENT: ${{ inputs.artifact_recipient }}
-        run: |
-          printf '%s\n' "$BUILD_RECIPIENT" > /tmp/recipient.pem
-          tar -czf /tmp/build-evidence.tar.gz -C private/data/private/build/build \
-            firmware.ota.bin firmware.elf config/sdkconfig.json
-          openssl cms -encrypt -binary -aes-256-cbc -in /tmp/build-evidence.tar.gz \
-            -outform DER -out sealed-build.cms /tmp/recipient.pem
+      - name: Compile firmware
+        run: ./build.sh | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: inputs.artifact_recipient != ''
         with:
-          name: sealed-build
-          path: sealed-build.cms
-          retention-days: 1
+          name: ab-ble-gateway-v4-firmware
+          path: build/ab-ble-gateway-v4.ota.bin
           if-no-files-found: error
-      # No plaintext firmware, settings, private key or cache uploads.

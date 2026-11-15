@@ -1,11 +1,7 @@
-private/
-.esphome/
 .esphome
+.cache/
+build/
+private/
 secrets.yaml
 __pycache__/
 *.pyc
-*.bin
-*.elf
-*.map
-image-assessment.json
-layout-assessment.json

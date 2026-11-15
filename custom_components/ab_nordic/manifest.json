@@ -13,10 +13,10 @@
     "esphome",
     "usb"
   ],
-  "documentation": "https://github.com/chkuendig/esphome-ab-ble-gateway-v4/blob/main/docs/NORDIC-SPLIT-SCANNER.md",
+  "documentation": "https://github.com/chkuendig/esphome-ab-ble-gateway-v4/blob/main/docs/home-assistant.md",
   "integration_type": "device",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/chkuendig/esphome-ab-ble-gateway-v4/issues",
   "requirements": [],
-  "version": "0.1.2"
+  "version": "0.2.0"
 }

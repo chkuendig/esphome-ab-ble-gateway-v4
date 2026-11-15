@@ -3,14 +3,14 @@
     "step": {
       "user": {
         "title": "April Brother nRF52832 scanner",
-        "description": "Choose the gateway whose nRF52832 radio should become its own, listen-only Bluetooth scanner. The gateway must run the split firmware profile.",
+        "description": "Choose the gateway whose nRF52832 radio should become its own, listen-only Bluetooth scanner. The gateway must run the ab-ble-gateway-v4 firmware.",
         "data": {
           "esphome_entry_id": "Gateway"
         }
       }
     },
     "abort": {
-      "no_gateway": "No loaded ESPHome gateway exposes the nRF52832 serial proxy (port \"Nordic scanner\"). Install the xbg-proxy-split firmware first.",
+      "no_gateway": "No loaded ESPHome gateway exposes the nRF52832 serial proxy (port \"Nordic scanner\"). Install the ab-ble-gateway-v4 firmware first.",
       "already_configured": "This gateway's nRF52832 scanner is already configured."
     }
   }

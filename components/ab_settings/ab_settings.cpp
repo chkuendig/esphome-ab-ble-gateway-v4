@@ -54,7 +54,7 @@ void AbSettings::setup() {
   }
   nvs_handle_t stock;
   if (nvs_open("storage", NVS_READONLY, &stock) != ESP_OK) {
-    ESP_LOGW(TAG, "No stock settings; provision Wi-Fi using the configuration button");
+    ESP_LOGW(TAG, "No stock settings; provision Wi-Fi over Improv serial");
     return;
   }
   // This hash is ESPHome's stable preference key when YAML has no STA network.
@@ -70,8 +70,12 @@ void AbSettings::setup() {
       if (!pref.save(&saved) || !global_preferences->sync()) {
         ESP_LOGE(TAG, "Could not persist imported Wi-Fi settings");
         mark_failed();
-      } else ESP_LOGI(TAG, "Imported saved Wi-Fi settings from stock NVS");
-    } else ESP_LOGW(TAG, "No supported stock Wi-Fi credentials; provisioning required");
+      } else {
+        ESP_LOGI(TAG, "Imported saved Wi-Fi settings from stock NVS");
+      }
+    } else {
+      ESP_LOGW(TAG, "No supported stock Wi-Fi credentials; provisioning required");
+    }
   }
   memset(&saved, 0, sizeof(saved));
 
