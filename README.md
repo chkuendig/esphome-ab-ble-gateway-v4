@@ -1,6 +1,10 @@
 # ESPHome for the April Brother AB BLE Gateway V4
 
-A local Home Assistant Bluetooth gateway: the ESP32 provides a connectable ESPHome proxy; the nRF52832 provides a listen-only scanner through a custom HA integration. Firmware imports stock personal Wi-Fi settings and preserves verified stock firmware for recovery.
+![AB BLE Gateway V4](docs/gateway.jpg)
+
+The AB BLE Gateway V4 is an ESP32- and nRF52832-based BLE-to-network gateway, widely sold through AliExpress, Amazon and Taobao. Its stock firmware forwards BLE advertisements (iBeacon, Eddystone or custom data) to a server over MQTT, HTTP or WebSockets; see the [April Brother wiki](https://wiki.aprbrother.com/en/AB_BLE_Gateway_V4.html).
+
+This firmware turns it into a local Home Assistant Bluetooth gateway: the ESP32 becomes a connectable ESPHome Bluetooth proxy, and the nRF52832 a second, listen-only scanner through a custom HA integration. Installation goes over the network from stock, imports the stock Wi-Fi settings and keeps stock as a fallback.
 
 ## Device
 
