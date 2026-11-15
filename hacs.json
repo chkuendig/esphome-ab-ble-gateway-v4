@@ -1,6 +1,5 @@
 {
     "name": "April Brother nRF52832 Scanner",
-    "hacs": "1.6.0",
     "render_readme": true,
     "homeassistant": "2026.11.0"
 }

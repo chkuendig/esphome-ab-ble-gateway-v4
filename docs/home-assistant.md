@@ -16,7 +16,7 @@ ESP32 scans passively and supports **one active GATT connection**. Only HA's cor
 
 ## Add the nRF52832 scanner
 
-1. In HACS, add `chkuendig/esphome-ab-ble-gateway-v4` as a custom **Integration** repository; install and restart HA. Alternatively, copy `custom_components/ab_nordic` into HA's `custom_components` and restart.
+1. In the **Marketplace**, add `chkuendig/esphome-ab-ble-gateway-v4` as a custom repository of category **Integration**; install it and restart HA. Alternatively, copy `custom_components/ab_nordic` into HA's `custom_components` and restart.
 2. In **Settings → Devices & services → Add integration**, select **April Brother nRF52832 Scanner**. Do not use the serial-port **Set up** picker.
 3. Select the loaded ESPHome gateway with port `Nordic scanner`.
 
