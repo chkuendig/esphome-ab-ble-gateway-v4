@@ -46,6 +46,10 @@ Tested on hardware: app-only OTA from stock 1.5.13, Wi-Fi import, encrypted API/
 
 Not yet tested: physical button gestures, LED, Improv serial, Ethernet and the network select, power loss during the factory copy, other PCB revisions or stock versions. Only stock 1.5.13 has been tested on hardware. If no verified stock app is found, ESPHome starts without trial or restore protection.
 
+## License
+
+Copyright 2026 Christian Kündig. Licensed under the [Apache License 2.0](LICENSE), the same license as Home Assistant.
+
 ## Vendor firmware
 
 This repository does not redistribute April Brother firmware. Keep flash backups private: they contain Wi-Fi credentials and other device settings.
