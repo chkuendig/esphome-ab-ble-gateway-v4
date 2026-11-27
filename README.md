@@ -33,6 +33,8 @@ Configuration: `ab-ble-gateway-v4.yaml`.
 | Software buttons | **Accept firmware**, **Restore stock firmware**, **Restart** |
 | Physical button | Binary sensor; 10-second hold resets ESPHome settings after acceptance |
 | LED | Status indication |
+| Diagnostics | Uptime, Wi-Fi signal and network, IP address, ESPHome version |
+| Web UI | None: it does not fit in the stock 1 MiB OTA slot. Use Home Assistant. |
 
 Wi-Fi and Ethernet share one image but run one at a time, as on stock: Wi-Fi is unstable while the ESP32 generates the Ethernet RMII clock.
 

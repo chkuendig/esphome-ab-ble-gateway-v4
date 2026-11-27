@@ -14,9 +14,11 @@ esphome:
   name_add_mac_suffix: true
   friendly_name: AB BLE Gateway V4
   min_version: 2026.10.2
+  # Home Assistant shows "<model> by <manufacturer>" from "<manufacturer>.<model>".
+  # Keep the version in sync with custom_components/ab_nordic/manifest.json.
   project:
-    name: chkuendig.ab-ble-gateway-v4
-    version: "1.0.0"
+    name: April Brother.AB BLE Gateway V4
+    version: "1.1.0"
   on_boot:
     # Reset the Ethernet PHY the way the stock firmware does, before the
     # Ethernet driver starts: GPIO13 disabled ~110 ms, low ~20 ms, then high.
@@ -98,6 +100,7 @@ api:
 ota:
   - platform: esphome
 
+# No web_server: it needs ~48 KB more than the stock 1 MiB OTA slot has left.
 safe_mode:
   num_attempts: 3
   boot_is_good_after: 2min
@@ -205,6 +208,25 @@ binary_sensor:
           - ON for at least 10s
         then:
           - lambda: id(recovery).reset_settings();
+
+sensor:
+  - platform: uptime
+    name: Uptime
+  - platform: wifi_signal
+    name: Wi-Fi signal
+    update_interval: 60s
+
+text_sensor:
+  - platform: version
+    name: ESPHome version
+  - platform: wifi_info
+    ip_address:
+      name: Wi-Fi IP address
+    ssid:
+      name: Wi-Fi network
+  - platform: ethernet_info
+    ip_address:
+      name: Ethernet IP address
 
 button:
   - platform: template
